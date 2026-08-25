@@ -61,7 +61,7 @@
         <div class="card account-card {{ key }}">
             <div class="card-body">
                 <h6 class="text-muted mb-1">{{ acc.label }}</h6>
-                <h4 class="fw-bold mb-1">{{ "%.2f"|format(acc.current_balance) }} &euro;</h4>
+                <h4 class="fw-bold mb-1">{{ "%.2f"|format(acc.adjusted_balance if acc.adjusted_balance is defined else acc.current_balance) }} &euro;</h4>
                 {% if acc.monthly_deposit > 0 %}
                 <small class="text-muted">
                     <i class="bi bi-plus-circle me-1"></i>{{ "%.2f"|format(acc.monthly_deposit) }} &euro;/Monat

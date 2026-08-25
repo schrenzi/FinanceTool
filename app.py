@@ -1,4 +1,5 @@
 import os
+from calendar import monthrange
 from datetime import date
 
 from flask import (
@@ -104,6 +105,26 @@ def get_monthly_totals():
     }
 
 
+def get_tagebuch_month_total(year, month):
+    first = date(year, month, 1)
+    last = date(year, month, monthrange(year, month)[1])
+    return sum(
+        e.amount for e in DailyExpense.query
+        .filter(DailyExpense.date >= first, DailyExpense.date <= last).all()
+    )
+
+
+def get_variable_expenses_avg(default=600.0):
+    today = date.today()
+    totals = []
+    for i in range(1, 4):
+        m = (today.month - i - 1) % 12 + 1
+        y = today.year + (today.month - i - 1) // 12
+        total = get_tagebuch_month_total(y, m)
+        totals.append(total if total > 0 else default)
+    return round(sum(totals) / 3, 2)
+
+
 # --- Routes ---
 
 @app.route("/")
@@ -118,17 +139,14 @@ def dashboard():
         cc_total = sum(to_monthly(e.amount, e.frequency) for e in cc.expenses)
         expenses_by_cc.append({"name": cc.name, "icon": cc.icon, "total": round(cc_total, 2)})
 
-    from calendar import monthrange
     today = date.today()
-    first_day = date(today.year, today.month, 1)
-    last_day = date(today.year, today.month, monthrange(today.year, today.month)[1])
-    tagebuch_total = sum(
-        e.amount for e in DailyExpense.query
-        .filter(DailyExpense.date >= first_day, DailyExpense.date <= last_day)
-        .all()
-    )
+    tagebuch_total = get_tagebuch_month_total(today.year, today.month)
     totals["tagebuch_spent"] = round(tagebuch_total, 2)
     totals["free_cash_remaining"] = round(totals["free_cash"] - tagebuch_total, 2)
+
+    nutzkonto = accounts.get("nutzkonto")
+    if nutzkonto:
+        nutzkonto.adjusted_balance = round(nutzkonto.current_balance - tagebuch_total, 2)
 
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
@@ -380,10 +398,14 @@ def api_prognosis():
     sparrate = totals["sparrate"]
     etf_rate = totals["etf_rate"]
     free_cash = totals["free_cash"]
+    var_expenses = get_variable_expenses_avg()
+    net_free = round(free_cash - var_expenses, 2)
 
     monthly_return = ((anlegekonto.expected_return_pct if anlegekonto else 7) / 100) / 12
 
     today = date.today()
+    tagebuch_this_month = get_tagebuch_month_total(today.year, today.month)
+
     months = []
     for i in range(13):
         m = (today.month + i - 1) % 12 + 1
@@ -393,15 +415,16 @@ def api_prognosis():
         if i == 0:
             months.append({
                 "label": label,
-                "nutzkonto": round(nutzkonto_bal, 2),
+                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month, 2),
                 "sparkonto": round(sparkonto_bal, 2),
                 "anlegekonto": round(anlegekonto_bal, 2),
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(free_cash, 2),
+                "free_cash": round(free_cash - tagebuch_this_month, 2),
+                "var_expenses": round(var_expenses, 2),
             })
         else:
-            nutzkonto_bal += free_cash
+            nutzkonto_bal += net_free
             sparkonto_bal += sparrate
             anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
 
@@ -412,7 +435,8 @@ def api_prognosis():
                 "anlegekonto": round(anlegekonto_bal, 2),
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(free_cash, 2),
+                "free_cash": round(net_free, 2),
+                "var_expenses": round(var_expenses, 2),
             })
 
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
@@ -422,7 +446,7 @@ def api_prognosis():
         if cc_total > 0:
             cc_data.append({"name": cc.name, "amount": round(cc_total, 2)})
 
-    return jsonify({"months": months, "cost_centers": cc_data})
+    return jsonify({"months": months, "cost_centers": cc_data, "var_expenses_avg": var_expenses})
 
 
 with app.app_context():

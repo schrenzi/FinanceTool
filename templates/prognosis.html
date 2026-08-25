@@ -53,6 +53,7 @@
                     <th>Monat</th>
                     <th class="text-end d-none d-md-table-cell">Einnahmen</th>
                     <th class="text-end d-none d-md-table-cell">Ausgaben</th>
+                    <th class="text-end d-none d-md-table-cell">Var. Ausg.</th>
                     <th class="text-end">Frei</th>
                     <th class="text-end">Nutzkonto</th>
                     <th class="text-end">Sparkonto</th>
@@ -248,6 +249,7 @@
                     '<td><strong>' + m.label + '</strong>' + (i === 0 ? ' <span class="badge bg-primary">Aktuell</span>' : '') + '</td>' +
                     '<td class="text-end text-income d-none d-md-table-cell">' + fmt(m.income) + '</td>' +
                     '<td class="text-end text-expense d-none d-md-table-cell">' + fmt(m.expenses) + '</td>' +
+                    '<td class="text-end d-none d-md-table-cell" style="color:#e65100">' + fmt(m.var_expenses) + '</td>' +
                     '<td class="text-end ' + (m.free_cash >= 0 ? 'text-free' : 'text-expense') + '">' + fmt(m.free_cash) + '</td>' +
                     '<td class="text-end">' + fmt(m.nutzkonto) + '</td>' +
                     '<td class="text-end">' + fmt(m.sparkonto) + '</td>' +
