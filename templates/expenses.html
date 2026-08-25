@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-receipt me-2"></i>Fixkosten & Ausgaben</h4>
+    <button class="btn btn-finance" data-bs-toggle="modal" data-bs-target="#addCCModal">
+        <i class="bi bi-plus-circle me-1"></i>Kostenstelle
+    </button>
+</div>
+
+<!-- Add Expense Form -->
+<div class="card mb-4">
+    <div class="card-header text-white" style="background: linear-gradient(135deg, #1a237e, #283593);">
+        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Neue Ausgabe</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('expense_add') }}" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Bezeichnung</label>
+                    <input type="text" name="name" class="form-control" required placeholder="z.B. Miete">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Betrag (&euro;)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Frequenz</label>
+                    <select name="frequency" class="form-select">
+                        {% for key, label, _ in frequencies %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Kostenstelle</label>
+                    <select name="cost_center_id" class="form-select" required>
+                        {% for cc in cost_centers %}
+                        <option value="{{ cc.id }}">{{ cc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-finance w-100">
+                        <i class="bi bi-plus-lg"></i> Hinzufügen
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    <input type="text" name="note" class="form-control form-control-sm" placeholder="Notiz (optional)">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Expenses by Cost Center -->
+{% for cc in cost_centers %}
+<div class="card mb-3">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <span class="cc-badge me-2"><i class="bi {{ cc.icon }}"></i> {{ cc.name }}</span>
+            {% set cc_total = cc.expenses | map(attribute='amount') | sum %}
+            <small class="text-muted">({{ cc.expenses | length }} Posten)</small>
+        </h6>
+        <div>
+            <form action="{{ url_for('costcenter_delete', cc_id=cc.id) }}" method="post"
+                  class="d-inline" onsubmit="return confirm('Kostenstelle und alle Ausgaben löschen?')">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+        </div>
+    </div>
+    {% if cc.expenses %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Bezeichnung</th>
+                    <th class="text-end">Betrag</th>
+                    <th>Frequenz</th>
+                    <th class="text-end">Monatlich</th>
+                    <th>Notiz</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exp in cc.expenses %}
+                <tr>
+                    <td>
+                        <form action="{{ url_for('expense_edit', expense_id=exp.id) }}" method="post" class="d-inline edit-form">
+                            <input type="hidden" name="cost_center_id" value="{{ cc.id }}">
+                            <input type="text" name="name" value="{{ exp.name }}" class="form-control form-control-sm d-inline" style="width:auto;">
+                    </td>
+                    <td class="text-end">
+                        <input type="number" name="amount" value="{{ exp.amount }}" class="form-control form-control-sm d-inline text-end" style="width:100px;" step="0.01">
+                    </td>
+                    <td>
+                        <select name="frequency" class="form-select form-select-sm" style="width:auto;">
+                            {% for key, label, _ in frequencies %}
+                            <option value="{{ key }}" {% if key == exp.frequency %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="text-end fw-bold">
+                        {% for key, _, factor in frequencies %}
+                            {% if key == exp.frequency %}
+                                {{ "%.2f"|format(exp.amount * factor) }} &euro;
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <input type="text" name="note" value="{{ exp.note }}" class="form-control form-control-sm" placeholder="..." style="width:120px;">
+                        <button type="submit" class="btn btn-sm btn-outline-primary ms-1"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('expense_delete', expense_id=exp.id) }}" method="post"
+                              onsubmit="return confirm('Ausgabe löschen?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-3">
+        Keine Ausgaben in dieser Kostenstelle.
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if not cost_centers %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-folder-x" style="font-size:3rem;"></i>
+    <p class="mt-2">Noch keine Kostenstellen vorhanden. Erstelle eine oben.</p>
+</div>
+{% endif %}
+
+<!-- Add Cost Center Modal -->
+<div class="modal fade" id="addCCModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('costcenter_add') }}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Neue Kostenstelle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required placeholder="z.B. Freizeit">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <select name="icon" class="form-select">
+                            {% for icon, label in [
+                                ("bi-house-door", "Wohnen"),
+                                ("bi-car-front", "Mobilität"),
+                                ("bi-shield-check", "Versicherungen"),
+                                ("bi-phone", "Kommunikation"),
+                                ("bi-heart-pulse", "Gesundheit"),
+                                ("bi-mortarboard", "Bildung"),
+                                ("bi-cart3", "Variable Ausgaben"),
+                                ("bi-controller", "Freizeit"),
+                                ("bi-airplane", "Reisen"),
+                                ("bi-three-dots", "Sonstiges"),
+                            ] %}
+                            <option value="{{ icon }}">{{ label }} ({{ icon }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn btn-finance">Erstellen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

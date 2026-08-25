@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Finanzübersicht</h4>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg">
+        <div class="card bg-income">
+            <div class="stat-card">
+                <div class="stat-icon text-income"><i class="bi bi-arrow-down-circle"></i></div>
+                <div class="stat-value text-income">{{ "%.2f"|format(totals.total_income) }} &euro;</div>
+                <div class="stat-label">Einnahmen / Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card bg-expense">
+            <div class="stat-card">
+                <div class="stat-icon text-expense"><i class="bi bi-arrow-up-circle"></i></div>
+                <div class="stat-value text-expense">{{ "%.2f"|format(totals.total_expenses) }} &euro;</div>
+                <div class="stat-label">Ausgaben / Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card bg-savings">
+            <div class="stat-card">
+                <div class="stat-icon text-savings"><i class="bi bi-piggy-bank"></i></div>
+                <div class="stat-value text-savings">{{ "%.2f"|format(totals.sparrate) }} &euro;</div>
+                <div class="stat-label">Sparrate / Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card bg-invest">
+            <div class="stat-card">
+                <div class="stat-icon text-invest"><i class="bi bi-graph-up"></i></div>
+                <div class="stat-value text-invest">{{ "%.2f"|format(totals.etf_rate) }} &euro;</div>
+                <div class="stat-label">ETF-Sparplan / Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg">
+        <div class="card bg-free">
+            <div class="stat-card">
+                <div class="stat-icon text-free"><i class="bi bi-wallet2"></i></div>
+                <div class="stat-value {% if totals.free_cash >= 0 %}text-free{% else %}text-expense{% endif %}">
+                    {{ "%.2f"|format(totals.free_cash) }} &euro;
+                </div>
+                <div class="stat-label">Frei verfügbar / Monat</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accounts Overview -->
+<div class="row g-3 mb-4">
+    {% for key, acc in accounts.items() %}
+    <div class="col-md-4">
+        <div class="card account-card {{ key }}">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">{{ acc.label }}</h6>
+                <h4 class="fw-bold mb-1">{{ "%.2f"|format(acc.current_balance) }} &euro;</h4>
+                {% if acc.monthly_deposit > 0 %}
+                <small class="text-muted">
+                    <i class="bi bi-plus-circle me-1"></i>{{ "%.2f"|format(acc.monthly_deposit) }} &euro;/Monat
+                </small>
+                {% endif %}
+                {% if acc.expected_return_pct > 0 %}
+                <small class="text-muted ms-2">
+                    <i class="bi bi-percent me-1"></i>{{ "%.1f"|format(acc.expected_return_pct) }}% p.a.
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Expense Breakdown -->
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Ausgaben nach Kostenstelle</h5>
+            </div>
+            <div class="card-body">
+                {% if expenses_by_cc %}
+                {% for cc in expenses_by_cc %}
+                {% if cc.total > 0 %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cc-badge"><i class="bi {{ cc.icon }}"></i> {{ cc.name }}</span>
+                    <strong>{{ "%.2f"|format(cc.total) }} &euro;</strong>
+                </div>
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar" style="width: {{ (cc.total / totals.total_expenses * 100) if totals.total_expenses > 0 else 0 }}%; background: #283593;"></div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-3">Noch keine Ausgaben eingetragen.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Einnahmequellen</h5>
+            </div>
+            <div class="card-body">
+                {% if incomes %}
+                {% for inc in incomes %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>{{ inc.name }}</strong>
+                        <br><small class="text-muted">{{ inc.income_type }}</small>
+                    </div>
+                    <div class="text-end">
+                        <strong class="text-income">{{ "%.2f"|format(inc.amount) }} &euro;</strong>
+                        <br><small class="text-muted">{{ inc.frequency }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-3">Noch keine Einnahmen eingetragen.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

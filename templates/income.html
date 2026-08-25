@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-cash-stack me-2"></i>Einnahmen</h4>
+
+<!-- Add Income Form -->
+<div class="card mb-4">
+    <div class="card-header text-white" style="background: linear-gradient(135deg, #1b5e20, #2e7d32);">
+        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Neue Einnahme</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('income_add') }}" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Bezeichnung</label>
+                    <input type="text" name="name" class="form-control" required placeholder="z.B. Netto-Gehalt">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Betrag (&euro;)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Frequenz</label>
+                    <select name="frequency" class="form-select">
+                        {% for key, label, _ in frequencies %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Typ</label>
+                    <select name="income_type" class="form-select">
+                        {% for key, label in income_types %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-lg"></i> Hinzufügen
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <input type="text" name="note" class="form-control form-control-sm" placeholder="Notiz (optional)">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Income List -->
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Alle Einnahmen</h5>
+    </div>
+    {% if incomes %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Bezeichnung</th>
+                    <th>Typ</th>
+                    <th class="text-end">Betrag</th>
+                    <th>Frequenz</th>
+                    <th class="text-end">Monatlich</th>
+                    <th>Notiz</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incomes %}
+                <tr>
+                    <td>
+                        <form action="{{ url_for('income_edit', income_id=inc.id) }}" method="post" class="d-inline">
+                            <input type="text" name="name" value="{{ inc.name }}" class="form-control form-control-sm d-inline" style="width:auto;">
+                    </td>
+                    <td>
+                        <select name="income_type" class="form-select form-select-sm" style="width:auto;">
+                            {% for key, label in income_types %}
+                            <option value="{{ key }}" {% if key == inc.income_type %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="text-end">
+                        <input type="number" name="amount" value="{{ inc.amount }}" class="form-control form-control-sm d-inline text-end" style="width:100px;" step="0.01">
+                    </td>
+                    <td>
+                        <select name="frequency" class="form-select form-select-sm" style="width:auto;">
+                            {% for key, label, _ in frequencies %}
+                            <option value="{{ key }}" {% if key == inc.frequency %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="text-end fw-bold text-income">
+                        {% for key, _, factor in frequencies %}
+                            {% if key == inc.frequency %}
+                                {{ "%.2f"|format(inc.amount * factor) }} &euro;
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <input type="text" name="note" value="{{ inc.note }}" class="form-control form-control-sm" placeholder="..." style="width:120px;">
+                        <button type="submit" class="btn btn-sm btn-outline-primary ms-1"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('income_delete', income_id=inc.id) }}" method="post"
+                              onsubmit="return confirm('Einnahme löschen?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-cash" style="font-size:3rem;"></i>
+        <p class="mt-2">Noch keine Einnahmen eingetragen.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-graph-up-arrow me-2"></i>12-Monats-Prognose</h4>
+
+<!-- Charts -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Kontostände</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="accountChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Ausgabenverteilung</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="expenseChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income vs Expenses Chart -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Einnahmen vs. Ausgaben</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container">
+            <canvas id="incomeExpenseChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Prognosis Table -->
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-table me-2"></i>Monatliche Übersicht</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="prognosisTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Monat</th>
+                    <th class="text-end d-none d-md-table-cell">Einnahmen</th>
+                    <th class="text-end d-none d-md-table-cell">Ausgaben</th>
+                    <th class="text-end">Frei</th>
+                    <th class="text-end">Nutzkonto</th>
+                    <th class="text-end">Sparkonto</th>
+                    <th class="text-end">ETF</th>
+                    <th class="text-end">Gesamt</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var isMobile = window.innerWidth < 768;
+
+    var COLORS = {
+        nutzkonto: '#00838f',
+        sparkonto: '#1565c0',
+        anlegekonto: '#6a1b9a',
+        income: '#2e7d32',
+        expense: '#c62828',
+        free: '#00838f',
+    };
+
+    fetch('/api/prognosis')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var months = data.months;
+            var labels = months.map(function(m) { return m.label; });
+
+            // Account Balance Chart
+            var ctxAcc = document.getElementById('accountChart').getContext('2d');
+            new Chart(ctxAcc, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Nutzkonto',
+                            data: months.map(function(m) { return m.nutzkonto; }),
+                            borderColor: COLORS.nutzkonto,
+                            backgroundColor: COLORS.nutzkonto + '20',
+                            fill: true,
+                            tension: 0.3,
+                        },
+                        {
+                            label: 'Sparkonto',
+                            data: months.map(function(m) { return m.sparkonto; }),
+                            borderColor: COLORS.sparkonto,
+                            backgroundColor: COLORS.sparkonto + '20',
+                            fill: true,
+                            tension: 0.3,
+                        },
+                        {
+                            label: 'Anlegekonto (ETF)',
+                            data: months.map(function(m) { return m.anlegekonto; }),
+                            borderColor: COLORS.anlegekonto,
+                            backgroundColor: COLORS.anlegekonto + '20',
+                            fill: true,
+                            tension: 0.3,
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' €';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            title: { display: !isMobile, text: 'Euro (€)' },
+                            ticks: {
+                                callback: function(val) {
+                                    return val.toLocaleString('de-DE') + ' €';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Income vs Expenses
+            var ctxIE = document.getElementById('incomeExpenseChart').getContext('2d');
+            new Chart(ctxIE, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Einnahmen',
+                            data: months.map(function(m) { return m.income; }),
+                            backgroundColor: COLORS.income + 'cc',
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Ausgaben',
+                            data: months.map(function(m) { return m.expenses; }),
+                            backgroundColor: COLORS.expense + 'cc',
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Frei verfügbar',
+                            data: months.map(function(m) { return m.free_cash; }),
+                            backgroundColor: COLORS.free + 'cc',
+                            borderRadius: 4,
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' €';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            ticks: {
+                                callback: function(val) {
+                                    return val.toLocaleString('de-DE') + ' €';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Expense Pie Chart
+            var ccData = data.cost_centers;
+            if (ccData.length > 0) {
+                var pieColors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9', '#e8eaf6'];
+                var ctxPie = document.getElementById('expenseChart').getContext('2d');
+                new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ccData.map(function(c) { return c.name; }),
+                        datasets: [{
+                            data: ccData.map(function(c) { return c.amount; }),
+                            backgroundColor: pieColors.slice(0, ccData.length),
+                            borderWidth: 2,
+                            borderColor: '#fff',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { padding: 12 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.label + ': ' + ctx.parsed.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' €';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('expenseChart').parentElement.innerHTML =
+                    '<p class="text-muted text-center py-4">Noch keine Ausgaben vorhanden.</p>';
+            }
+
+            // Table
+            var tbody = document.querySelector('#prognosisTable tbody');
+            months.forEach(function(m, i) {
+                var total = m.nutzkonto + m.sparkonto + m.anlegekonto;
+                var row = '<tr' + (i === 0 ? ' class="table-active"' : '') + '>' +
+                    '<td><strong>' + m.label + '</strong>' + (i === 0 ? ' <span class="badge bg-primary">Aktuell</span>' : '') + '</td>' +
+                    '<td class="text-end text-income d-none d-md-table-cell">' + fmt(m.income) + '</td>' +
+                    '<td class="text-end text-expense d-none d-md-table-cell">' + fmt(m.expenses) + '</td>' +
+                    '<td class="text-end ' + (m.free_cash >= 0 ? 'text-free' : 'text-expense') + '">' + fmt(m.free_cash) + '</td>' +
+                    '<td class="text-end">' + fmt(m.nutzkonto) + '</td>' +
+                    '<td class="text-end">' + fmt(m.sparkonto) + '</td>' +
+                    '<td class="text-end">' + fmt(m.anlegekonto) + '</td>' +
+                    '<td class="text-end fw-bold">' + fmt(total) + '</td>' +
+                    '</tr>';
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        });
+
+    function fmt(val) {
+        return val.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+    }
+})();
+</script>
+{% endblock %}

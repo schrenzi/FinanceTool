@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-journal-text me-2"></i>Tagebuch</h4>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('tagebuch', year=prev_year, month=prev_month) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        <span class="fw-bold">
+            {{ ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"][month - 1] }} {{ year }}
+        </span>
+        <a href="{{ url_for('tagebuch', year=next_year, month=next_month) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-4">
+        <div class="card bg-expense">
+            <div class="stat-card">
+                <div class="stat-icon text-expense"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="stat-value text-expense">{{ "%.2f"|format(total) }} &euro;</div>
+                <div class="stat-label">Ausgaben diesen Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="card" style="background: linear-gradient(135deg, #fff3e0, #ffe0b2);">
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #e65100;"><i class="bi bi-calendar-day"></i></div>
+                <div class="stat-value" style="color: #e65100;">{{ "%.2f"|format(avg) }} &euro;</div>
+                <div class="stat-label">Tagesdurchschnitt</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="card" style="background: linear-gradient(135deg, #fce4ec, #f8bbd0);">
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #880e4f;"><i class="bi bi-hash"></i></div>
+                <div class="stat-value" style="color: #880e4f;">{{ count }}</div>
+                <div class="stat-label">Einträge</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick-Add -->
+<div class="card mb-4">
+    <div class="card-header text-white" style="background: linear-gradient(135deg, #1a237e, #283593);">
+        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Neue Unternehmung erfassen</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('tagebuch_add') }}" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Datum</label>
+                    <input type="date" name="date" class="form-control" required
+                           value="{{ '%04d-%02d-%02d'|format(year, month, 1) if month != now_month else today }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Beschreibung</label>
+                    <input type="text" name="description" class="form-control" required
+                           placeholder="z.B. Pizza bei Luigi">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Betrag (&euro;)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Kategorie</label>
+                    <select name="category" class="form-select">
+                        {% for key, label, icon in categories %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-finance w-100">
+                        <i class="bi bi-plus-lg"></i> Erfassen
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    <input type="text" name="note" class="form-control form-control-sm"
+                           placeholder="Notiz (optional)">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Category Breakdown -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Nach Kategorie</h5>
+            </div>
+            <div class="card-body">
+                {% if cat_totals %}
+                {% for key, label, icon in categories %}
+                {% if key in cat_totals %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cc-badge"><i class="bi {{ icon }}"></i> {{ label }}</span>
+                    <strong>{{ "%.2f"|format(cat_totals[key]) }} &euro;</strong>
+                </div>
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar" style="width: {{ (cat_totals[key] / total * 100) if total > 0 else 0 }}%; background: #283593;"></div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-3">Noch keine Einträge diesen Monat.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Entries by Day -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Einträge</h5>
+            </div>
+            {% if by_day %}
+            {% for day, day_entries in by_day.items() %}
+            {% set day_total = day_entries | map(attribute='amount') | sum %}
+            <div class="px-3 py-2 bg-light border-bottom d-flex justify-content-between">
+                <small class="fw-bold text-muted">{{ day.strftime('%A, %d. %B %Y') }}</small>
+                <small class="fw-bold text-muted">{{ "%.2f"|format(day_total) }} &euro;</small>
+            </div>
+            {% for entry in day_entries %}
+            <div class="entry-item border-bottom px-3 py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 min-width-0">
+                        {% for key, label, icon in categories %}
+                        {% if key == entry.category %}
+                        <i class="bi {{ icon }} text-muted"></i>
+                        {% endif %}
+                        {% endfor %}
+                        <div class="min-width-0">
+                            <div class="fw-medium text-truncate">{{ entry.description }}</div>
+                            <small class="text-muted">{{ cat_lookup.get(entry.category, entry.category) }}{% if entry.note %} · {{ entry.note }}{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
+                        <strong class="text-expense">{{ "%.2f"|format(entry.amount) }} &euro;</strong>
+                        <button class="btn btn-sm btn-link text-muted p-0 entry-edit-btn" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#edit-{{ entry.id }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <form action="{{ url_for('tagebuch_delete', entry_id=entry.id) }}" method="post"
+                              class="d-inline" onsubmit="return confirm('Eintrag löschen?')">
+                            <button class="btn btn-sm btn-link text-muted p-0">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="collapse mt-2" id="edit-{{ entry.id }}">
+                    <form action="{{ url_for('tagebuch_edit', entry_id=entry.id) }}" method="post">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-6 col-md-3">
+                                <input type="date" name="date" value="{{ entry.date.isoformat() }}" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="text" name="description" value="{{ entry.description }}" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <input type="number" name="amount" value="{{ entry.amount }}" class="form-control form-control-sm" step="0.01">
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <select name="category" class="form-select form-select-sm">
+                                    {% for key, label, icon in categories %}
+                                    <option value="{{ key }}" {% if key == entry.category %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <input type="text" name="note" value="{{ entry.note }}" class="form-control form-control-sm" placeholder="Notiz">
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <button type="submit" class="btn btn-sm btn-finance w-100">
+                                    <i class="bi bi-check-lg me-1"></i>Speichern
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            {% endfor %}
+            {% else %}
+            <div class="card-body text-center text-muted py-5">
+                <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
+                <p class="mt-2">Noch keine Einträge in diesem Monat.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

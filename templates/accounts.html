@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-bank me-2"></i>Konten verwalten</h4>
+
+<form action="{{ url_for('accounts_save') }}" method="post">
+    <div class="row g-4">
+        {% for acc in accounts %}
+        <div class="col-lg-4">
+            <div class="card account-card {{ acc.account_type }}">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        {% if acc.account_type == 'nutzkonto' %}
+                        <i class="bi bi-wallet2 me-2 text-free"></i>
+                        {% elif acc.account_type == 'sparkonto' %}
+                        <i class="bi bi-piggy-bank me-2 text-savings"></i>
+                        {% else %}
+                        <i class="bi bi-graph-up me-2 text-invest"></i>
+                        {% endif %}
+                        {{ acc.label }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Aktueller Kontostand (&euro;)</label>
+                        <input type="number" name="balance_{{ acc.account_type }}"
+                               value="{{ acc.current_balance }}" class="form-control"
+                               step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monatliche Einzahlung (&euro;)</label>
+                        <input type="number" name="deposit_{{ acc.account_type }}"
+                               value="{{ acc.monthly_deposit }}" class="form-control"
+                               step="0.01" min="0">
+                        {% if acc.account_type == 'nutzkonto' %}
+                        <div class="form-text">
+                            Wird automatisch berechnet: {{ "%.2f"|format(totals.free_cash) }} &euro;/Monat frei verfügbar
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if acc.account_type == 'anlegekonto' %}
+                    <div class="mb-3">
+                        <label class="form-label">Erwartete Rendite (% p.a.)</label>
+                        <input type="number" name="return_{{ acc.account_type }}"
+                               value="{{ acc.expected_return_pct }}" class="form-control"
+                               step="0.1" min="0" max="30">
+                        <div class="form-text">
+                            Durchschnittliche ETF-Rendite: ca. 7% p.a.
+                        </div>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="return_{{ acc.account_type }}" value="{{ acc.expected_return_pct }}">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4 text-end">
+        <button type="submit" class="btn btn-finance btn-lg">
+            <i class="bi bi-check-lg me-1"></i>Speichern
+        </button>
+    </div>
+</form>
+
+<!-- Info Cards -->
+<div class="row g-3 mt-4">
+    <div class="col-md-4">
+        <div class="card border-0" style="background: #e0f7fa;">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle me-1"></i>Nutzkonto</h6>
+                <small>Das Nutzkonto repräsentiert dein Girokonto - das Kapital, das du für den täglichen Bedarf nutzt. Der Saldo wächst monatlich um den frei verfügbaren Betrag nach Abzug aller Fixkosten, Sparrate und ETF-Sparplan.</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0" style="background: #e3f2fd;">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle me-1"></i>Sparkonto</h6>
+                <small>Das Sparkonto ist für deine monatliche Fixeinzahlung. Der hier eingetragene Betrag wird von deinem Gehalt abgezogen und dem Sparkonto gutgeschrieben.</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0" style="background: #f3e5f5;">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle me-1"></i>Anlegekonto</h6>
+                <small>Das Anlegekonto bildet deinen ETF-Sparplan ab. Die monatliche Einzahlung wird mit der erwarteten Rendite (Zinseszins) in der Prognose berücksichtigt.</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

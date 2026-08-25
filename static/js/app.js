@@ -1,0 +1,1 @@
+// FinancePrognosis - minimal JS utilities

@@ -1,0 +1,200 @@
+body {
+    background-color: #f0f2f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border-radius: 0.75rem;
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1.25rem;
+}
+
+.stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stat-card .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+.text-income {
+    color: #2e7d32;
+}
+
+.text-expense {
+    color: #c62828;
+}
+
+.text-savings {
+    color: #1565c0;
+}
+
+.text-invest {
+    color: #6a1b9a;
+}
+
+.text-free {
+    color: #00838f;
+}
+
+.bg-income {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+}
+
+.bg-expense {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+}
+
+.bg-savings {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+}
+
+.bg-invest {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+}
+
+.bg-free {
+    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+}
+
+.cc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 2rem;
+    background: #e8eaf6;
+    color: #283593;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.progress {
+    border-radius: 1rem;
+    background-color: #e9ecef;
+}
+
+.account-card {
+    border-left: 4px solid;
+    border-radius: 0.75rem;
+}
+
+.account-card.nutzkonto {
+    border-left-color: #00838f;
+}
+
+.account-card.sparkonto {
+    border-left-color: #1565c0;
+}
+
+.account-card.anlegekonto {
+    border-left-color: #6a1b9a;
+}
+
+.btn-finance {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: #fff;
+    border: none;
+}
+
+.btn-finance:hover {
+    background: linear-gradient(135deg, #283593, #3949ab);
+    color: #fff;
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+.entry-item:hover {
+    background-color: #f8f9fa;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+@media (max-width: 767.98px) {
+    .stat-card {
+        padding: 0.75rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .stat-card .stat-icon {
+        font-size: 1.4rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+    }
+
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    h4 {
+        font-size: 1.15rem;
+    }
+
+    .card-header h5 {
+        font-size: 0.95rem;
+    }
+
+    #prognosisTable {
+        font-size: 0.75rem;
+    }
+
+    #prognosisTable th,
+    #prognosisTable td {
+        padding: 0.4rem 0.3rem;
+        white-space: nowrap;
+    }
+}
