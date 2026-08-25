@@ -19,7 +19,7 @@
             <div class="stat-card">
                 <div class="stat-icon text-expense"><i class="bi bi-arrow-up-circle"></i></div>
                 <div class="stat-value text-expense">{{ "%.2f"|format(totals.total_expenses) }} &euro;</div>
-                <div class="stat-label">Ausgaben / Monat</div>
+                <div class="stat-label">Fixkosten / Monat</div>
             </div>
         </div>
     </div>
@@ -49,17 +49,6 @@
                     {{ "%.2f"|format(totals.free_cash_remaining) }} &euro;
                 </div>
                 <div class="stat-label">Frei verfügbar diesen Monat</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg">
-        <div class="card" style="background: linear-gradient(135deg, #fff3e0, #ffe0b2);">
-            <div class="stat-card">
-                <div class="stat-icon" style="color: #e65100;"><i class="bi bi-journal-text"></i></div>
-                <div class="stat-value" style="color: #e65100;">
-                    {{ "%.2f"|format(totals.tagebuch_spent) }} &euro;
-                </div>
-                <div class="stat-label">Ausgegeben diesen Monat</div>
             </div>
         </div>
     </div>
