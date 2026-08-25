@@ -7,10 +7,11 @@ from flask import (
 from models import db, CostCenter, Expense, Income, AccountConfig, DailyExpense
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_DIR = os.environ.get("DB_DIR", BASE_DIR)
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(DB_DIR, "finance.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///" + os.path.join(BASE_DIR, "finance.db")
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
 

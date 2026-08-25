@@ -1,3 +1,7 @@
+databases:
+  - name: finance-db
+    plan: free
+
 services:
   - type: web
     name: finance-prognosis
@@ -5,11 +9,9 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
-      - key: DB_DIR
-        value: /var/data
+      - key: DATABASE_URL
+        fromDatabase:
+          name: finance-db
+          property: connectionURI
       - key: SECRET_KEY
         generateValue: true
-    disk:
-      name: finance-data
-      mountPath: /var/data
-      sizeGB: 1
