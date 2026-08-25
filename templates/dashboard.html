@@ -41,14 +41,25 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-lg">
+    <div class="col-6 col-lg">
         <div class="card bg-free">
             <div class="stat-card">
                 <div class="stat-icon text-free"><i class="bi bi-wallet2"></i></div>
-                <div class="stat-value {% if totals.free_cash >= 0 %}text-free{% else %}text-expense{% endif %}">
-                    {{ "%.2f"|format(totals.free_cash) }} &euro;
+                <div class="stat-value {% if totals.free_cash_remaining >= 0 %}text-free{% else %}text-expense{% endif %}">
+                    {{ "%.2f"|format(totals.free_cash_remaining) }} &euro;
                 </div>
-                <div class="stat-label">Frei verfügbar / Monat</div>
+                <div class="stat-label">Frei verfügbar diesen Monat</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card" style="background: linear-gradient(135deg, #fff3e0, #ffe0b2);">
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #e65100;"><i class="bi bi-journal-text"></i></div>
+                <div class="stat-value" style="color: #e65100;">
+                    {{ "%.2f"|format(totals.tagebuch_spent) }} &euro;
+                </div>
+                <div class="stat-label">Ausgegeben diesen Monat</div>
             </div>
         </div>
     </div>

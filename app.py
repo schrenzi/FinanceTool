@@ -36,6 +36,8 @@ OUTING_CATEGORIES = [
     ("kino", "Kino", "bi-film"),
     ("konzert_event", "Konzert / Event", "bi-music-note-beamed"),
     ("ausflug", "Ausflug", "bi-geo-alt"),
+    ("arzt", "Arzt / Gesundheit", "bi-heart-pulse"),
+    ("koerperpflege", "Friseur / Körperpflege", "bi-scissors"),
     ("sonstiges", "Sonstiges", "bi-three-dots"),
 ]
 
@@ -115,6 +117,18 @@ def dashboard():
     for cc in cost_centers:
         cc_total = sum(to_monthly(e.amount, e.frequency) for e in cc.expenses)
         expenses_by_cc.append({"name": cc.name, "icon": cc.icon, "total": round(cc_total, 2)})
+
+    from calendar import monthrange
+    today = date.today()
+    first_day = date(today.year, today.month, 1)
+    last_day = date(today.year, today.month, monthrange(today.year, today.month)[1])
+    tagebuch_total = sum(
+        e.amount for e in DailyExpense.query
+        .filter(DailyExpense.date >= first_day, DailyExpense.date <= last_day)
+        .all()
+    )
+    totals["tagebuch_spent"] = round(tagebuch_total, 2)
+    totals["free_cash_remaining"] = round(totals["free_cash"] - tagebuch_total, 2)
 
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
