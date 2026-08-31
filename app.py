@@ -445,6 +445,7 @@ def api_prognosis():
         cc_total = sum(to_monthly(e.amount, e.frequency) for e in cc.expenses)
         if cc_total > 0:
             cc_data.append({"name": cc.name, "amount": round(cc_total, 2)})
+    cc_data.append({"name": "Variable Ausgaben (Tagebuch)", "amount": var_expenses})
 
     return jsonify({"months": months, "cost_centers": cc_data, "var_expenses_avg": var_expenses})
 

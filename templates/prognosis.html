@@ -210,6 +210,9 @@
             var ccData = data.cost_centers;
             if (ccData.length > 0) {
                 var pieColors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9', '#e8eaf6'];
+                var sliceColors = ccData.map(function(c, i) {
+                    return c.name.indexOf('Tagebuch') >= 0 ? '#e65100' : pieColors[i % pieColors.length];
+                });
                 var ctxPie = document.getElementById('expenseChart').getContext('2d');
                 new Chart(ctxPie, {
                     type: 'doughnut',
@@ -217,7 +220,7 @@
                         labels: ccData.map(function(c) { return c.name; }),
                         datasets: [{
                             data: ccData.map(function(c) { return c.amount; }),
-                            backgroundColor: pieColors.slice(0, ccData.length),
+                            backgroundColor: sliceColors,
                             borderWidth: 2,
                             borderColor: '#fff',
                         }]
