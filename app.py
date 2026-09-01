@@ -114,6 +114,31 @@ def get_tagebuch_month_total(year, month):
     )
 
 
+def process_monthly_credit():
+    today = date.today()
+    current_month = f"{today.year}-{today.month:02d}"
+    nutzkonto = AccountConfig.query.filter_by(account_type="nutzkonto").first()
+    if not nutzkonto:
+        return
+    if nutzkonto.last_credited_month == current_month:
+        return
+    if not nutzkonto.last_credited_month:
+        nutzkonto.last_credited_month = current_month
+        db.session.commit()
+        return
+    totals = get_monthly_totals()
+    prev_year, prev_month = map(int, nutzkonto.last_credited_month.split("-"))
+    while (prev_year, prev_month) < (today.year, today.month):
+        tagebuch = get_tagebuch_month_total(prev_year, prev_month)
+        nutzkonto.current_balance += totals["free_cash"] - tagebuch
+        prev_month += 1
+        if prev_month > 12:
+            prev_month = 1
+            prev_year += 1
+    nutzkonto.last_credited_month = current_month
+    db.session.commit()
+
+
 def get_variable_expenses_avg(default=600.0):
     today = date.today()
     totals = []
@@ -123,6 +148,11 @@ def get_variable_expenses_avg(default=600.0):
         total = get_tagebuch_month_total(y, m)
         totals.append(total if total > 0 else default)
     return round(sum(totals) / 3, 2)
+
+
+@app.before_request
+def before_request():
+    process_monthly_credit()
 
 
 # --- Routes ---

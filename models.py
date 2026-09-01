@@ -45,3 +45,4 @@ class AccountConfig(db.Model):
     current_balance = db.Column(db.Float, default=0)
     monthly_deposit = db.Column(db.Float, default=0)
     expected_return_pct = db.Column(db.Float, default=0)
+    last_credited_month = db.Column(db.String(7), default="")
