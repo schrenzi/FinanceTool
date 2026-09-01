@@ -480,9 +480,21 @@ def api_prognosis():
     return jsonify({"months": months, "cost_centers": cc_data, "var_expenses_avg": var_expenses})
 
 
+def run_migrations():
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    columns = [c["name"] for c in inspector.get_columns("account_config")]
+    if "last_credited_month" not in columns:
+        db.session.execute(text(
+            "ALTER TABLE account_config ADD COLUMN last_credited_month VARCHAR(7) DEFAULT ''"
+        ))
+        db.session.commit()
+
+
 with app.app_context():
     db.create_all()
     seed_defaults()
+    run_migrations()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
