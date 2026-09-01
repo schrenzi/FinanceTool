@@ -493,8 +493,8 @@ def run_migrations():
 
 with app.app_context():
     db.create_all()
-    seed_defaults()
     run_migrations()
+    seed_defaults()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
