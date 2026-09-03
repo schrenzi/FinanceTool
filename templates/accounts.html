@@ -64,6 +64,93 @@
     </div>
 </form>
 
+<!-- Planned Boosts -->
+<div class="card mt-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Geplante Sonderbuchungen</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('boost_add') }}" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Beschreibung</label>
+                    <input type="text" name="description" class="form-control" required placeholder="z.B. Weihnachtsgeld">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Betrag (&euro;)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Datum</label>
+                    <input type="date" name="date" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Typ</label>
+                    <select name="boost_type" class="form-select">
+                        <option value="income">Einnahme</option>
+                        <option value="expense">Ausgabe</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-finance w-100">
+                        <i class="bi bi-plus-lg"></i> Hinzufügen
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <input type="text" name="note" class="form-control form-control-sm" placeholder="Notiz (optional)">
+                </div>
+            </div>
+        </form>
+    </div>
+    {% if boosts %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Datum</th>
+                    <th>Beschreibung</th>
+                    <th>Typ</th>
+                    <th class="text-end">Betrag</th>
+                    <th>Notiz</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in boosts %}
+                <tr>
+                    <td>{{ b.date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ b.description }}</td>
+                    <td>
+                        {% if b.boost_type == 'income' %}
+                        <span class="badge bg-success">Einnahme</span>
+                        {% else %}
+                        <span class="badge bg-danger">Ausgabe</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold {% if b.boost_type == 'income' %}text-income{% else %}text-expense{% endif %}">
+                        {{ "%.2f"|format(b.amount) }} &euro;
+                    </td>
+                    <td><small class="text-muted">{{ b.note }}</small></td>
+                    <td>
+                        <form action="{{ url_for('boost_delete', boost_id=b.id) }}" method="post"
+                              onsubmit="return confirm('Sonderbuchung löschen?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-3 border-top">
+        Keine Sonderbuchungen geplant.
+    </div>
+    {% endif %}
+</div>
+
 <!-- Info Cards -->
 <div class="row g-3 mt-4">
     <div class="col-md-4">

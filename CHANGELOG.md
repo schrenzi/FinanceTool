@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.0
+
+- **Auto-Kredit alle Konten**: Sparkonto (+Sparrate) und Anlegekonto (+ETF-Rate + Rendite) werden am Monatsersten automatisch gutgeschrieben
+- **Nicht-aliquote Zyklen**: Quartals- und Jahresausgaben/-einnahmen erscheinen nur in ihren Fälligkeitsmonaten statt aliquot verteilt
+- **Fälligkeitsmonat**: Neues "Fällig im"-Feld bei Einnahmen und Ausgaben für nicht-monatliche Posten
+- **Sonderbuchungen (Boosts)**: Einmalige geplante Einnahmen/Ausgaben zu bestimmten Zeitpunkten (z.B. Weihnachtsgeld, Nachzahlung)
+- **Prognose**: Neue "Boost"-Spalte zeigt geplante Sonderbuchungen pro Monat
+- **Prognose**: Einnahmen/Ausgaben-Balken variieren je nach Monat (non-aliquot)
+- **Datenmodell**: `PlannedBoost`-Modell, `due_month`-Feld auf Expense/Income
+
 ## v0.3.0
 
 - **Nutzkonto**: Automatische monatliche Gutschrift am Monatsersten (free_cash - Vormonats-Tagebuch)

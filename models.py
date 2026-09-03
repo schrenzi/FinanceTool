@@ -17,6 +17,7 @@ class Expense(db.Model):
     name = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False, default=0)
     frequency = db.Column(db.String(20), default="monthly")
+    due_month = db.Column(db.Integer, default=1)
     note = db.Column(db.String(500), default="")
 
 
@@ -25,6 +26,7 @@ class Income(db.Model):
     name = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False, default=0)
     frequency = db.Column(db.String(20), default="monthly")
+    due_month = db.Column(db.Integer, default=1)
     income_type = db.Column(db.String(50), default="salary")
     note = db.Column(db.String(500), default="")
 
@@ -35,6 +37,15 @@ class DailyExpense(db.Model):
     description = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False, default=0)
     category = db.Column(db.String(50), nullable=False, default="restaurant")
+    note = db.Column(db.String(500), default="")
+
+
+class PlannedBoost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    boost_type = db.Column(db.String(20), default="income")
     note = db.Column(db.String(500), default="")
 
 

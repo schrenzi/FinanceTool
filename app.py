@@ -5,7 +5,7 @@ from datetime import date
 from flask import (
     Flask, render_template, request, redirect, url_for, flash, jsonify,
 )
-from models import db, CostCenter, Expense, Income, AccountConfig, DailyExpense
+from models import db, CostCenter, Expense, Income, AccountConfig, DailyExpense, PlannedBoost
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -53,6 +53,43 @@ COST_CENTER_ICONS = [
     ("bi-three-dots", "Sonstiges"),
 ]
 
+MONTHS_DE = [
+    "", "Januar", "Februar", "März", "April", "Mai", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "Dezember",
+]
+
+
+def is_due_in_month(frequency, due_month, target_month):
+    if frequency == "monthly":
+        return True
+    if frequency == "quarterly":
+        return (target_month - due_month) % 3 == 0
+    if frequency == "yearly":
+        return target_month == due_month
+    return True
+
+
+def get_month_totals(month_num):
+    total_income = sum(
+        i.amount for i in Income.query.all()
+        if is_due_in_month(i.frequency, i.due_month, month_num)
+    )
+    total_expenses = sum(
+        e.amount for e in Expense.query.all()
+        if is_due_in_month(e.frequency, e.due_month, month_num)
+    )
+    accounts = {a.account_type: a for a in AccountConfig.query.all()}
+    sparrate = accounts.get("sparkonto").monthly_deposit if accounts.get("sparkonto") else 0
+    etf_rate = accounts.get("anlegekonto").monthly_deposit if accounts.get("anlegekonto") else 0
+    free_cash = total_income - total_expenses - sparrate - etf_rate
+    return {
+        "total_income": round(total_income, 2),
+        "total_expenses": round(total_expenses, 2),
+        "sparrate": round(sparrate, 2),
+        "etf_rate": round(etf_rate, 2),
+        "free_cash": round(free_cash, 2),
+    }
+
 
 def to_monthly(amount, frequency):
     for key, _, factor in FREQUENCIES:
@@ -89,22 +126,6 @@ def seed_defaults():
         db.session.commit()
 
 
-def get_monthly_totals():
-    total_income = sum(to_monthly(i.amount, i.frequency) for i in Income.query.all())
-    total_expenses = sum(to_monthly(e.amount, e.frequency) for e in Expense.query.all())
-    accounts = {a.account_type: a for a in AccountConfig.query.all()}
-    sparrate = accounts.get("sparkonto").monthly_deposit if accounts.get("sparkonto") else 0
-    etf_rate = accounts.get("anlegekonto").monthly_deposit if accounts.get("anlegekonto") else 0
-    free_cash = total_income - total_expenses - sparrate - etf_rate
-    return {
-        "total_income": round(total_income, 2),
-        "total_expenses": round(total_expenses, 2),
-        "sparrate": round(sparrate, 2),
-        "etf_rate": round(etf_rate, 2),
-        "free_cash": round(free_cash, 2),
-    }
-
-
 def get_tagebuch_month_total(year, month):
     first = date(year, month, 1)
     last = date(year, month, monthrange(year, month)[1])
@@ -117,7 +138,10 @@ def get_tagebuch_month_total(year, month):
 def process_monthly_credit():
     today = date.today()
     current_month = f"{today.year}-{today.month:02d}"
-    nutzkonto = AccountConfig.query.filter_by(account_type="nutzkonto").first()
+    accounts = {a.account_type: a for a in AccountConfig.query.all()}
+    nutzkonto = accounts.get("nutzkonto")
+    sparkonto = accounts.get("sparkonto")
+    anlegekonto = accounts.get("anlegekonto")
     if not nutzkonto:
         return
     if nutzkonto.last_credited_month == current_month:
@@ -126,15 +150,26 @@ def process_monthly_credit():
         nutzkonto.last_credited_month = current_month
         db.session.commit()
         return
-    totals = get_monthly_totals()
+
     prev_year, prev_month = map(int, nutzkonto.last_credited_month.split("-"))
+    monthly_return = ((anlegekonto.expected_return_pct if anlegekonto else 0) / 100) / 12
+
     while (prev_year, prev_month) < (today.year, today.month):
+        totals = get_month_totals(prev_month)
         tagebuch = get_tagebuch_month_total(prev_year, prev_month)
         nutzkonto.current_balance += totals["free_cash"] - tagebuch
+        if sparkonto:
+            sparkonto.current_balance += totals["sparrate"]
+        if anlegekonto:
+            anlegekonto.current_balance = (
+                anlegekonto.current_balance * (1 + monthly_return)
+                + totals["etf_rate"]
+            )
         prev_month += 1
         if prev_month > 12:
             prev_month = 1
             prev_year += 1
+
     nutzkonto.last_credited_month = current_month
     db.session.commit()
 
@@ -159,17 +194,21 @@ def before_request():
 
 @app.route("/")
 def dashboard():
-    totals = get_monthly_totals()
+    today = date.today()
+    totals = get_month_totals(today.month)
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
     incomes = Income.query.all()
     accounts = {a.account_type: a for a in AccountConfig.query.all()}
 
     expenses_by_cc = []
     for cc in cost_centers:
-        cc_total = sum(to_monthly(e.amount, e.frequency) for e in cc.expenses)
-        expenses_by_cc.append({"name": cc.name, "icon": cc.icon, "total": round(cc_total, 2)})
+        cc_total = sum(
+            e.amount for e in cc.expenses
+            if is_due_in_month(e.frequency, e.due_month, today.month)
+        )
+        if cc_total > 0:
+            expenses_by_cc.append({"name": cc.name, "icon": cc.icon, "total": round(cc_total, 2)})
 
-    today = date.today()
     tagebuch_total = get_tagebuch_month_total(today.year, today.month)
     totals["tagebuch_spent"] = round(tagebuch_total, 2)
     totals["free_cash_remaining"] = round(totals["free_cash"] - tagebuch_total, 2)
@@ -187,7 +226,10 @@ def dashboard():
 @app.route("/expenses")
 def expense_list():
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
-    return render_template("expenses.html", cost_centers=cost_centers, frequencies=FREQUENCIES)
+    return render_template(
+        "expenses.html", cost_centers=cost_centers,
+        frequencies=FREQUENCIES, months_de=MONTHS_DE,
+    )
 
 
 @app.route("/expenses/add", methods=["POST"])
@@ -197,6 +239,7 @@ def expense_add():
         name=request.form["name"],
         amount=float(request.form.get("amount") or 0),
         frequency=request.form.get("frequency", "monthly"),
+        due_month=int(request.form.get("due_month") or 1),
         note=request.form.get("note", ""),
     )
     db.session.add(expense)
@@ -211,6 +254,7 @@ def expense_edit(expense_id):
     expense.name = request.form["name"]
     expense.amount = float(request.form.get("amount") or 0)
     expense.frequency = request.form.get("frequency", "monthly")
+    expense.due_month = int(request.form.get("due_month") or 1)
     expense.cost_center_id = int(request.form["cost_center_id"])
     expense.note = request.form.get("note", "")
     db.session.commit()
@@ -258,6 +302,7 @@ def income_list():
     return render_template(
         "income.html", incomes=incomes,
         frequencies=FREQUENCIES, income_types=INCOME_TYPES,
+        months_de=MONTHS_DE,
     )
 
 
@@ -267,6 +312,7 @@ def income_add():
         name=request.form["name"],
         amount=float(request.form.get("amount") or 0),
         frequency=request.form.get("frequency", "monthly"),
+        due_month=int(request.form.get("due_month") or 1),
         income_type=request.form.get("income_type", "salary"),
         note=request.form.get("note", ""),
     )
@@ -282,6 +328,7 @@ def income_edit(income_id):
     income.name = request.form["name"]
     income.amount = float(request.form.get("amount") or 0)
     income.frequency = request.form.get("frequency", "monthly")
+    income.due_month = int(request.form.get("due_month") or 1)
     income.income_type = request.form.get("income_type", "salary")
     income.note = request.form.get("note", "")
     db.session.commit()
@@ -302,8 +349,10 @@ def income_delete(income_id):
 @app.route("/accounts")
 def accounts():
     accs = AccountConfig.query.all()
-    totals = get_monthly_totals()
-    return render_template("accounts.html", accounts=accs, totals=totals)
+    today = date.today()
+    totals = get_month_totals(today.month)
+    boosts = PlannedBoost.query.order_by(PlannedBoost.date).all()
+    return render_template("accounts.html", accounts=accs, totals=totals, boosts=boosts)
 
 
 @app.route("/accounts/save", methods=["POST"])
@@ -323,12 +372,36 @@ def accounts_save():
     return redirect(url_for("accounts"))
 
 
+@app.route("/boost/add", methods=["POST"])
+def boost_add():
+    boost = PlannedBoost(
+        date=date.fromisoformat(request.form["date"]),
+        description=request.form["description"],
+        amount=float(request.form.get("amount") or 0),
+        boost_type=request.form.get("boost_type", "income"),
+        note=request.form.get("note", ""),
+    )
+    db.session.add(boost)
+    db.session.commit()
+    flash(f"Boost '{boost.description}' wurde hinzugefügt.", "success")
+    return redirect(url_for("accounts"))
+
+
+@app.route("/boost/<int:boost_id>/delete", methods=["POST"])
+def boost_delete(boost_id):
+    boost = PlannedBoost.query.get_or_404(boost_id)
+    desc = boost.description
+    db.session.delete(boost)
+    db.session.commit()
+    flash(f"'{desc}' wurde gelöscht.", "success")
+    return redirect(url_for("accounts"))
+
+
 @app.route("/tagebuch")
 def tagebuch():
     year = request.args.get("year", type=int, default=date.today().year)
     month = request.args.get("month", type=int, default=date.today().month)
 
-    from calendar import monthrange
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
 
@@ -414,7 +487,6 @@ def prognosis():
 
 @app.route("/api/prognosis")
 def api_prognosis():
-    totals = get_monthly_totals()
     accounts = {a.account_type: a for a in AccountConfig.query.all()}
 
     nutzkonto = accounts.get("nutzkonto")
@@ -425,22 +497,30 @@ def api_prognosis():
     sparkonto_bal = sparkonto.current_balance if sparkonto else 0
     anlegekonto_bal = anlegekonto.current_balance if anlegekonto else 0
 
-    sparrate = totals["sparrate"]
-    etf_rate = totals["etf_rate"]
-    free_cash = totals["free_cash"]
+    sparrate = sparkonto.monthly_deposit if sparkonto else 0
+    etf_rate = anlegekonto.monthly_deposit if anlegekonto else 0
     var_expenses = get_variable_expenses_avg()
-    net_free = round(free_cash - var_expenses, 2)
 
     monthly_return = ((anlegekonto.expected_return_pct if anlegekonto else 7) / 100) / 12
 
     today = date.today()
     tagebuch_this_month = get_tagebuch_month_total(today.year, today.month)
 
+    boosts = PlannedBoost.query.all()
+    boost_by_month = {}
+    for b in boosts:
+        key = f"{b.date.month:02d}/{b.date.year}"
+        amt = b.amount if b.boost_type == "income" else -b.amount
+        boost_by_month[key] = boost_by_month.get(key, 0) + amt
+
     months = []
     for i in range(13):
         m = (today.month + i - 1) % 12 + 1
         y = today.year + (today.month + i - 1) // 12
         label = f"{m:02d}/{y}"
+
+        totals = get_month_totals(m)
+        boost_amount = boost_by_month.get(label, 0)
 
         if i == 0:
             months.append({
@@ -450,10 +530,12 @@ def api_prognosis():
                 "anlegekonto": round(anlegekonto_bal, 2),
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(free_cash - tagebuch_this_month, 2),
+                "free_cash": round(totals["free_cash"] - tagebuch_this_month, 2),
                 "var_expenses": round(var_expenses, 2),
+                "boost": round(boost_amount, 2),
             })
         else:
+            net_free = totals["free_cash"] - var_expenses + boost_amount
             nutzkonto_bal += net_free
             sparkonto_bal += sparrate
             anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
@@ -467,6 +549,7 @@ def api_prognosis():
                 "expenses": round(totals["total_expenses"], 2),
                 "free_cash": round(net_free, 2),
                 "var_expenses": round(var_expenses, 2),
+                "boost": round(boost_amount, 2),
             })
 
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
@@ -483,12 +566,30 @@ def api_prognosis():
 def run_migrations():
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
-    columns = [c["name"] for c in inspector.get_columns("account_config")]
-    if "last_credited_month" not in columns:
-        db.session.execute(text(
-            "ALTER TABLE account_config ADD COLUMN last_credited_month VARCHAR(7) DEFAULT ''"
-        ))
-        db.session.commit()
+
+    if "account_config" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("account_config")]
+        if "last_credited_month" not in columns:
+            db.session.execute(text(
+                "ALTER TABLE account_config ADD COLUMN last_credited_month VARCHAR(7) DEFAULT ''"
+            ))
+            db.session.commit()
+
+    if "expense" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("expense")]
+        if "due_month" not in columns:
+            db.session.execute(text(
+                "ALTER TABLE expense ADD COLUMN due_month INTEGER DEFAULT 1"
+            ))
+            db.session.commit()
+
+    if "income" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("income")]
+        if "due_month" not in columns:
+            db.session.execute(text(
+                "ALTER TABLE income ADD COLUMN due_month INTEGER DEFAULT 1"
+            ))
+            db.session.commit()
 
 
 with app.app_context():

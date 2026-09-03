@@ -26,9 +26,17 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Frequenz</label>
-                    <select name="frequency" class="form-select">
+                    <select name="frequency" class="form-select" onchange="toggleDueMonth(this)">
                         {% for key, label, _ in frequencies %}
                         <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 due-month-col" style="display:none;">
+                    <label class="form-label">Fällig im</label>
+                    <select name="due_month" class="form-select">
+                        {% for i in range(1, 13) %}
+                        <option value="{{ i }}">{{ months_de[i] }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -79,6 +87,7 @@
                     <th>Bezeichnung</th>
                     <th class="text-end">Betrag</th>
                     <th>Frequenz</th>
+                    <th>Fällig</th>
                     <th class="text-end">Monatlich</th>
                     <th>Notiz</th>
                     <th></th>
@@ -96,9 +105,16 @@
                         <input type="number" name="amount" value="{{ exp.amount }}" class="form-control form-control-sm d-inline text-end" style="width:100px;" step="0.01">
                     </td>
                     <td>
-                        <select name="frequency" class="form-select form-select-sm" style="width:auto;">
+                        <select name="frequency" class="form-select form-select-sm" style="width:auto;" onchange="toggleDueMonth(this)">
                             {% for key, label, _ in frequencies %}
                             <option value="{{ key }}" {% if key == exp.frequency %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="due-month-cell" {% if exp.frequency == 'monthly' %}style="display:none;"{% endif %}>
+                        <select name="due_month" class="form-select form-select-sm" style="width:auto;">
+                            {% for i in range(1, 13) %}
+                            <option value="{{ i }}" {% if i == exp.due_month %}selected{% endif %}>{{ months_de[i][:3] }}</option>
                             {% endfor %}
                         </select>
                     </td>
@@ -182,4 +198,19 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDueMonth(sel) {
+    var row = sel.closest('tr') || sel.closest('.row');
+    var isMonthly = sel.value === 'monthly';
+    var targets = row ? row.querySelectorAll('.due-month-col, .due-month-cell') : [];
+    targets.forEach(function(el) { el.style.display = isMonthly ? 'none' : ''; });
+    if (!row) {
+        var col = sel.closest('.card-body').querySelector('.due-month-col');
+        if (col) col.style.display = isMonthly ? 'none' : '';
+    }
+}
+</script>
 {% endblock %}
