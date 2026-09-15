@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0
+
+- **Tagebuch**: Neue Kategorien: Lebensmittel, Snacks, Wohnung, Mobilität, Kleidung, Digitale Geräte, Fortgehen, Urlaub
+- **Tagebuch**: "Kino" und "Konzert / Event" zusammengelegt zu "Vergnügen"
+
 ## v0.4.0
 
 - **Auto-Kredit alle Konten**: Sparkonto (+Sparrate) und Anlegekonto (+ETF-Rate + Rendite) werden am Monatsersten automatisch gutgeschrieben
