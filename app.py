@@ -358,8 +358,7 @@ def accounts():
     accs = AccountConfig.query.all()
     today = date.today()
     totals = get_month_totals(today.month)
-    boosts = PlannedBoost.query.order_by(PlannedBoost.date).all()
-    return render_template("accounts.html", accounts=accs, totals=totals, boosts=boosts)
+    return render_template("accounts.html", accounts=accs, totals=totals)
 
 
 @app.route("/accounts/save", methods=["POST"])
@@ -390,8 +389,8 @@ def boost_add():
     )
     db.session.add(boost)
     db.session.commit()
-    flash(f"Boost '{boost.description}' wurde hinzugefügt.", "success")
-    return redirect(url_for("accounts"))
+    flash(f"Sondereinnahme '{boost.description}' wurde hinzugefügt.", "success")
+    return redirect(url_for("tagebuch"))
 
 
 @app.route("/boost/<int:boost_id>/delete", methods=["POST"])
@@ -401,7 +400,7 @@ def boost_delete(boost_id):
     db.session.delete(boost)
     db.session.commit()
     flash(f"'{desc}' wurde gelöscht.", "success")
-    return redirect(url_for("accounts"))
+    return redirect(url_for("tagebuch"))
 
 
 @app.route("/tagebuch")
@@ -441,6 +440,7 @@ def tagebuch():
         entries=entries, by_day=by_day, total=round(total, 2), avg=avg,
         count=len(entries), cat_totals=cat_totals, cat_lookup=cat_lookup,
         categories=OUTING_CATEGORIES,
+        boosts=PlannedBoost.query.order_by(PlannedBoost.date).all(),
         year=year, month=month,
         prev_year=prev_year, prev_month=prev_month,
         next_year=next_year, next_month=next_month,

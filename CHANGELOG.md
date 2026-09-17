@@ -1,9 +1,12 @@
 # Changelog
 
-## v0.5.0
+## v0.6.0
 
+- **Navigation**: Reiter "Ausgaben" umbenannt zu "Fixkosten"
 - **Tagebuch**: Neue Kategorien: Lebensmittel, Snacks, Wohnung, Mobilität, Kleidung, Digitale Geräte, Fortgehen, Urlaub
 - **Tagebuch**: "Kino" und "Konzert / Event" zusammengelegt zu "Vergnügen"
+- **Tagebuch**: "Sondereinnahmen" (vorher "Boosts" im Konten-Reiter) hierhin verschoben — für gelegentliche Einnahmen wie Verkäufe
+- **Prognose**: Spalte "Boost" umbenannt zu "Sonder"
 
 ## v0.4.0
 
