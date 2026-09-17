@@ -417,8 +417,12 @@ def tagebuch():
                .all())
 
     total = sum(e.amount for e in entries)
-    days_with_data = len(set(e.date for e in entries))
-    avg = round(total / days_with_data, 2) if days_with_data else 0
+    today = date.today()
+    if year == today.year and month == today.month:
+        days_elapsed = today.day
+    else:
+        days_elapsed = monthrange(year, month)[1]
+    avg = round(total / days_elapsed, 2) if days_elapsed else 0
 
     cat_lookup = {key: label for key, label, _ in OUTING_CATEGORIES}
     cat_totals = {}
