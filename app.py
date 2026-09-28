@@ -536,12 +536,12 @@ def api_prognosis():
         if i == 0:
             months.append({
                 "label": label,
-                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month, 2),
+                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month + boost_amount, 2),
                 "sparkonto": round(sparkonto_bal, 2),
                 "anlegekonto": round(anlegekonto_bal, 2),
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(totals["free_cash"] - tagebuch_this_month, 2),
+                "free_cash": round(totals["free_cash"] - tagebuch_this_month + boost_amount, 2),
                 "var_expenses": round(var_expenses, 2),
                 "boost": round(boost_amount, 2),
             })
