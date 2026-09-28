@@ -161,10 +161,16 @@ def process_monthly_credit():
     prev_year, prev_month = map(int, nutzkonto.last_credited_month.split("-"))
     monthly_return = ((anlegekonto.expected_return_pct if anlegekonto else 0) / 100) / 12
 
+    all_boosts = PlannedBoost.query.all()
     while (prev_year, prev_month) < (today.year, today.month):
         totals = get_month_totals(prev_month)
         tagebuch = get_tagebuch_month_total(prev_year, prev_month)
-        nutzkonto.current_balance += totals["free_cash"] - tagebuch
+        month_boosts = sum(
+            b.amount if b.boost_type == "income" else -b.amount
+            for b in all_boosts
+            if b.date.year == prev_year and b.date.month == prev_month
+        )
+        nutzkonto.current_balance += totals["free_cash"] - tagebuch + month_boosts
         if sparkonto:
             sparkonto.current_balance += totals["sparrate"]
         if anlegekonto:
@@ -218,11 +224,17 @@ def dashboard():
 
     tagebuch_total = get_tagebuch_month_total(today.year, today.month)
     totals["tagebuch_spent"] = round(tagebuch_total, 2)
-    totals["free_cash_remaining"] = round(totals["free_cash"] - tagebuch_total, 2)
+
+    boosts_this_month = sum(
+        b.amount if b.boost_type == "income" else -b.amount
+        for b in PlannedBoost.query.all()
+        if b.date.year == today.year and b.date.month == today.month
+    )
+    totals["free_cash_remaining"] = round(totals["free_cash"] - tagebuch_total + boosts_this_month, 2)
 
     nutzkonto = accounts.get("nutzkonto")
     if nutzkonto:
-        nutzkonto.adjusted_balance = round(nutzkonto.current_balance - tagebuch_total, 2)
+        nutzkonto.adjusted_balance = round(nutzkonto.current_balance - tagebuch_total + boosts_this_month, 2)
 
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
@@ -389,7 +401,7 @@ def boost_add():
     )
     db.session.add(boost)
     db.session.commit()
-    flash(f"Sondereinnahme '{boost.description}' wurde hinzugefügt.", "success")
+    flash(f"Sonderbuchung '{boost.description}' wurde hinzugefügt.", "success")
     return redirect(url_for("tagebuch"))
 
 

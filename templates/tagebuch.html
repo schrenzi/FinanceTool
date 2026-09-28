@@ -203,10 +203,10 @@
         </div>
     </div>
 </div>
-<!-- Sondereinnahmen -->
+<!-- Sonderbuchungen -->
 <div class="card mt-4">
     <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Sondereinnahmen</h5>
+        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Sonderbuchungen</h5>
     </div>
     <div class="card-body">
         <form action="{{ url_for('boost_add') }}" method="post">
@@ -274,7 +274,7 @@
                     <td><small class="text-muted">{{ b.note }}</small></td>
                     <td>
                         <form action="{{ url_for('boost_delete', boost_id=b.id) }}" method="post"
-                              onsubmit="return confirm('Sondereinnahme löschen?')">
+                              onsubmit="return confirm('Sonderbuchung löschen?')">
                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
@@ -285,7 +285,7 @@
     </div>
     {% else %}
     <div class="card-body text-center text-muted py-3 border-top">
-        Keine Sondereinnahmen eingetragen.
+        Keine Sonderbuchungen eingetragen.
     </div>
     {% endif %}
 </div>
