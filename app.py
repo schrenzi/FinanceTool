@@ -536,6 +536,7 @@ def api_prognosis():
         amt = b.amount if b.boost_type == "income" else -b.amount
         boost_by_month[key] = boost_by_month.get(key, 0) + amt
 
+    etf_total_deposits = anlegekonto_bal
     months = []
     for i in range(13):
         m = (today.month + i - 1) % 12 + 1
@@ -546,11 +547,13 @@ def api_prognosis():
         boost_amount = boost_by_month.get(label, 0)
 
         if i == 0:
+            etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
             months.append({
                 "label": label,
                 "nutzkonto": round(nutzkonto_bal - tagebuch_this_month + boost_amount, 2),
                 "sparkonto": round(sparkonto_bal, 2),
                 "anlegekonto": round(anlegekonto_bal, 2),
+                "etf_return": etf_return,
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
                 "free_cash": round(totals["free_cash"] - tagebuch_this_month + boost_amount, 2),
@@ -561,13 +564,16 @@ def api_prognosis():
             net_free = totals["free_cash"] - var_expenses + boost_amount
             nutzkonto_bal += net_free
             sparkonto_bal += sparrate
+            etf_total_deposits += etf_rate
             anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
+            etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
 
             months.append({
                 "label": label,
                 "nutzkonto": round(nutzkonto_bal, 2),
                 "sparkonto": round(sparkonto_bal, 2),
                 "anlegekonto": round(anlegekonto_bal, 2),
+                "etf_return": etf_return,
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
                 "free_cash": round(net_free, 2),

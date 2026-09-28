@@ -29,18 +29,6 @@
     </div>
 </div>
 
-<!-- Income vs Expenses Chart -->
-<div class="card mb-4">
-    <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Einnahmen vs. Ausgaben</h5>
-    </div>
-    <div class="card-body">
-        <div class="chart-container">
-            <canvas id="incomeExpenseChart"></canvas>
-        </div>
-    </div>
-</div>
-
 <!-- Prognosis Table -->
 <div class="card">
     <div class="card-header bg-white">
@@ -59,6 +47,7 @@
                     <th class="text-end">Nutzkonto</th>
                     <th class="text-end">Sparkonto</th>
                     <th class="text-end">ETF</th>
+                    <th class="text-end d-none d-md-table-cell">ETF-Ertrag</th>
                     <th class="text-end">Gesamt</th>
                 </tr>
             </thead>
@@ -78,9 +67,6 @@
         nutzkonto: '#00838f',
         sparkonto: '#1565c0',
         anlegekonto: '#6a1b9a',
-        income: '#2e7d32',
-        expense: '#c62828',
-        free: '#00838f',
     };
 
     fetch('/api/prognosis')
@@ -152,61 +138,6 @@
                 }
             });
 
-            // Income vs Expenses
-            var ctxIE = document.getElementById('incomeExpenseChart').getContext('2d');
-            new Chart(ctxIE, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Einnahmen',
-                            data: months.map(function(m) { return m.income; }),
-                            backgroundColor: COLORS.income + 'cc',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Ausgaben',
-                            data: months.map(function(m) { return m.expenses; }),
-                            backgroundColor: COLORS.expense + 'cc',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Frei verfügbar',
-                            data: months.map(function(m) { return m.free_cash; }),
-                            backgroundColor: COLORS.free + 'cc',
-                            borderRadius: 4,
-                        },
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(ctx) {
-                                    return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' €';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { maxRotation: 45, minRotation: 45 }
-                        },
-                        y: {
-                            ticks: {
-                                callback: function(val) {
-                                    return val.toLocaleString('de-DE') + ' €';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
             // Expense Pie Chart
             var ccData = data.cost_centers;
             if (ccData.length > 0) {
@@ -259,6 +190,7 @@
                     '<td class="text-end">' + fmt(m.nutzkonto) + '</td>' +
                     '<td class="text-end">' + fmt(m.sparkonto) + '</td>' +
                     '<td class="text-end">' + fmt(m.anlegekonto) + '</td>' +
+                    '<td class="text-end d-none d-md-table-cell text-invest">' + fmt(m.etf_return) + '</td>' +
                     '<td class="text-end fw-bold">' + fmt(total) + '</td>' +
                     '</tr>';
                 tbody.insertAdjacentHTML('beforeend', row);

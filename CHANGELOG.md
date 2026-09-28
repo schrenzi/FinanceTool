@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.0
+
+- **Prognose**: Neue Spalte "ETF-Ertrag" zeigt kumulierten Zins-/Zinseszinsertrag (ohne Einzahlungen)
+- **Prognose**: Diagramm "Einnahmen vs. Ausgaben" entfernt
+- **Dashboard**: Sonderbuchungen fließen in Nutzkonto- und Frei-verfügbar-Kachel ein
+- **Auto-Kredit**: Monatliche Gutschrift berücksichtigt Sonderbuchungen
+- **Tagebuch**: Tagesdurchschnitt nutzt Kalendertage statt nur Tage mit Einträgen
+
 ## v0.6.0
 
 - **Navigation**: Reiter "Ausgaben" umbenannt zu "Fixkosten"
