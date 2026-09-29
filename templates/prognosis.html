@@ -47,7 +47,7 @@
                     <th class="text-end">Nutzkonto</th>
                     <th class="text-end">Sparkonto</th>
                     <th class="text-end">ETF</th>
-                    <th class="text-end d-none d-md-table-cell">ETF-Ertrag</th>
+                    <th class="text-end">ETF-Ertrag</th>
                     <th class="text-end">Gesamt</th>
                 </tr>
             </thead>
@@ -190,7 +190,7 @@
                     '<td class="text-end">' + fmt(m.nutzkonto) + '</td>' +
                     '<td class="text-end">' + fmt(m.sparkonto) + '</td>' +
                     '<td class="text-end">' + fmt(m.anlegekonto) + '</td>' +
-                    '<td class="text-end d-none d-md-table-cell text-invest">' + fmt(m.etf_return) + '</td>' +
+                    '<td class="text-end text-invest">' + fmt(m.etf_return) + '</td>' +
                     '<td class="text-end fw-bold">' + fmt(total) + '</td>' +
                     '</tr>';
                 tbody.insertAdjacentHTML('beforeend', row);
