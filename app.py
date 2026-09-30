@@ -187,7 +187,7 @@ def process_monthly_credit():
     db.session.commit()
 
 
-def get_variable_expenses_avg(default=600.0):
+def get_variable_expenses_avg(default=900.0):
     today = date.today()
     totals = []
     for i in range(1, 4):
