@@ -508,7 +508,7 @@ def prognosis():
     return render_template("prognosis.html")
 
 
-@app.route("/api/prognosis")
+@app.route("/api/prognosis", methods=["GET", "POST"])
 def api_prognosis():
     accounts = {a.account_type: a for a in AccountConfig.query.all()}
 
@@ -525,12 +525,18 @@ def api_prognosis():
     var_expenses = get_variable_expenses_avg()
     return_pct = anlegekonto.expected_return_pct if anlegekonto else 7
 
-    delta_income = request.args.get("delta_income", 0, type=float)
-    delta_expenses = request.args.get("delta_expenses", 0, type=float)
-    wi_sparrate = request.args.get("sparrate", None, type=float)
-    wi_etf_rate = request.args.get("etf_rate", None, type=float)
-    wi_return_pct = request.args.get("return_pct", None, type=float)
-    wi_var_expenses = request.args.get("var_expenses", None, type=float)
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+    else:
+        body = {}
+
+    delta_income = body.get("delta_income", request.args.get("delta_income", 0, type=float))
+    delta_expenses = body.get("delta_expenses", request.args.get("delta_expenses", 0, type=float))
+    wi_sparrate = body.get("sparrate", request.args.get("sparrate", None, type=float))
+    wi_etf_rate = body.get("etf_rate", request.args.get("etf_rate", None, type=float))
+    wi_return_pct = body.get("return_pct", request.args.get("return_pct", None, type=float))
+    wi_var_expenses = body.get("var_expenses", request.args.get("var_expenses", None, type=float))
+    scenario_events = body.get("events", [])
 
     if wi_sparrate is not None:
         sparrate = wi_sparrate
@@ -553,6 +559,20 @@ def api_prognosis():
         amt = b.amount if b.boost_type == "income" else -b.amount
         boost_by_month[key] = boost_by_month.get(key, 0) + amt
 
+    event_onetime = {}
+    event_recurring = []
+    for ev in scenario_events:
+        ev_month = int(ev.get("month", 1))
+        ev_year = int(ev.get("year", today.year))
+        ev_amount = float(ev.get("amount", 0))
+        if ev.get("type") == "expense":
+            ev_amount = -ev_amount
+        if ev.get("recurring"):
+            event_recurring.append((ev_year, ev_month, ev_amount))
+        else:
+            key = f"{ev_month:02d}/{ev_year}"
+            event_onetime[key] = event_onetime.get(key, 0) + ev_amount
+
     etf_total_deposits = anlegekonto_bal
     months = []
     for i in range(13):
@@ -563,23 +583,29 @@ def api_prognosis():
         totals = get_month_totals(m)
         boost_amount = boost_by_month.get(label, 0)
 
+        scenario_amount = event_onetime.get(label, 0)
+        for ev_year, ev_month, ev_amt in event_recurring:
+            if y > ev_year or (y == ev_year and m >= ev_month):
+                scenario_amount += ev_amt
+
         if i == 0:
             etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
             months.append({
                 "label": label,
-                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month + boost_amount, 2),
+                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month + boost_amount + scenario_amount, 2),
                 "sparkonto": round(sparkonto_bal, 2),
                 "anlegekonto": round(anlegekonto_bal, 2),
                 "etf_return": etf_return,
                 "income": round(totals["total_income"], 2),
                 "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(totals["free_cash"] - tagebuch_this_month + boost_amount, 2),
+                "free_cash": round(totals["free_cash"] - tagebuch_this_month + boost_amount + scenario_amount, 2),
                 "var_expenses": round(var_expenses, 2),
                 "boost": round(boost_amount, 2),
+                "scenario": round(scenario_amount, 2),
             })
         else:
             adjusted_free = totals["free_cash"] + delta_income - delta_expenses
-            net_free = adjusted_free - var_expenses + boost_amount
+            net_free = adjusted_free - var_expenses + boost_amount + scenario_amount
             nutzkonto_bal += net_free
             sparkonto_bal += sparrate
             etf_total_deposits += etf_rate
@@ -597,6 +623,7 @@ def api_prognosis():
                 "free_cash": round(net_free, 2),
                 "var_expenses": round(var_expenses, 2),
                 "boost": round(boost_amount, 2),
+                "scenario": round(scenario_amount, 2),
             })
 
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()

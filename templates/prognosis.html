@@ -13,21 +13,8 @@
     </div>
     <div class="collapse" id="whatIfPanel">
         <div class="card-body">
+            <!-- Global overrides -->
             <div class="row g-3">
-                <div class="col-6 col-md-4">
-                    <label class="form-label"><small>Einnahmen +/-</small></label>
-                    <div class="input-group input-group-sm">
-                        <input type="number" id="wi_delta_income" class="form-control" value="0" step="50">
-                        <span class="input-group-text">&euro;</span>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <label class="form-label"><small>Fixkosten +/-</small></label>
-                    <div class="input-group input-group-sm">
-                        <input type="number" id="wi_delta_expenses" class="form-control" value="0" step="50">
-                        <span class="input-group-text">&euro;</span>
-                    </div>
-                </div>
                 <div class="col-6 col-md-4">
                     <label class="form-label"><small>Sparrate</small></label>
                     <div class="input-group input-group-sm">
@@ -57,6 +44,44 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Scenario Events -->
+            <hr class="my-3">
+            <h6 class="mb-3"><i class="bi bi-calendar-event me-1"></i>Szenarien</h6>
+            <div id="eventList"></div>
+            <div class="row g-2 align-items-end mt-1">
+                <div class="col-6 col-md-3">
+                    <label class="form-label"><small>Beschreibung</small></label>
+                    <input type="text" id="ev_desc" class="form-control form-control-sm" placeholder="z.B. Gehaltserhöhung">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label"><small>Betrag (&euro;)</small></label>
+                    <input type="number" id="ev_amount" class="form-control form-control-sm" step="50" min="0">
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label"><small>Ab / Im Monat</small></label>
+                    <select id="ev_month" class="form-select form-select-sm"></select>
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label"><small>Typ</small></label>
+                    <select id="ev_type" class="form-select form-select-sm">
+                        <option value="income">Einnahme</option>
+                        <option value="expense">Ausgabe</option>
+                    </select>
+                </div>
+                <div class="col-4 col-md-1">
+                    <label class="form-label"><small>Laufend</small></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ev_recurring">
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" id="evAdd">
+                        <i class="bi bi-plus-lg me-1"></i>Hinzufügen
+                    </button>
+                </div>
+            </div>
+
             <div class="mt-3 d-flex gap-2">
                 <button class="btn btn-finance btn-sm" id="wiApply">
                     <i class="bi bi-play-fill me-1"></i>Simulieren
@@ -131,6 +156,7 @@
     var accountChart = null;
     var pieChart = null;
     var defaults = null;
+    var events = [];
 
     var COLORS = {
         nutzkonto: '#00838f',
@@ -142,27 +168,110 @@
         return val.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
     }
 
-    function buildQuery() {
-        var params = [];
-        var di = parseFloat(document.getElementById('wi_delta_income').value) || 0;
-        var de = parseFloat(document.getElementById('wi_delta_expenses').value) || 0;
+    // Populate month selector with next 13 months
+    var monthSelect = document.getElementById('ev_month');
+    var now = new Date();
+    for (var i = 0; i < 13; i++) {
+        var mm = (now.getMonth() + i) % 12 + 1;
+        var yy = now.getFullYear() + Math.floor((now.getMonth() + i) / 12);
+        var opt = document.createElement('option');
+        opt.value = mm + '-' + yy;
+        opt.textContent = (mm < 10 ? '0' : '') + mm + '/' + yy;
+        monthSelect.appendChild(opt);
+    }
+
+    function renderEvents() {
+        var el = document.getElementById('eventList');
+        if (events.length === 0) { el.innerHTML = ''; return; }
+        var html = '<div class="mb-2">';
+        events.forEach(function(ev, idx) {
+            var badge = ev.type === 'income'
+                ? '<span class="badge bg-success">Einnahme</span>'
+                : '<span class="badge bg-danger">Ausgabe</span>';
+            var recLabel = ev.recurring ? 'ab' : 'im';
+            var monthLabel = (ev.month < 10 ? '0' : '') + ev.month + '/' + ev.year;
+            html += '<div class="d-flex align-items-center gap-2 mb-1 py-1 px-2 rounded" style="background:#f8f9fa;">' +
+                badge +
+                '<span class="flex-grow-1"><strong>' + ev.desc + '</strong> — ' + fmt(ev.amount) + ' ' + recLabel + ' ' + monthLabel +
+                (ev.recurring ? ' <i class="bi bi-arrow-repeat text-muted" title="Laufend"></i>' : '') + '</span>' +
+                '<button class="btn btn-sm btn-link text-muted p-0 ev-remove" data-idx="' + idx + '"><i class="bi bi-x-lg"></i></button>' +
+                '</div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+        el.querySelectorAll('.ev-remove').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                events.splice(parseInt(this.dataset.idx), 1);
+                renderEvents();
+            });
+        });
+    }
+
+    document.getElementById('evAdd').addEventListener('click', function() {
+        var desc = document.getElementById('ev_desc').value.trim();
+        var amount = parseFloat(document.getElementById('ev_amount').value);
+        var monthVal = document.getElementById('ev_month').value.split('-');
+        var type = document.getElementById('ev_type').value;
+        var recurring = document.getElementById('ev_recurring').checked;
+
+        if (!desc || !amount || amount <= 0) return;
+
+        events.push({
+            desc: desc,
+            amount: amount,
+            month: parseInt(monthVal[0]),
+            year: parseInt(monthVal[1]),
+            type: type,
+            recurring: recurring,
+        });
+        renderEvents();
+        document.getElementById('ev_desc').value = '';
+        document.getElementById('ev_amount').value = '';
+        document.getElementById('ev_recurring').checked = false;
+    });
+
+    function buildPayload() {
+        var payload = {};
         var sr = document.getElementById('wi_sparrate').value;
         var er = document.getElementById('wi_etf_rate').value;
         var rp = document.getElementById('wi_return_pct').value;
         var ve = document.getElementById('wi_var_expenses').value;
 
-        if (di !== 0) params.push('delta_income=' + di);
-        if (de !== 0) params.push('delta_expenses=' + de);
-        if (sr !== '' && defaults && parseFloat(sr) !== defaults.sparrate) params.push('sparrate=' + sr);
-        if (er !== '' && defaults && parseFloat(er) !== defaults.etf_rate) params.push('etf_rate=' + er);
-        if (rp !== '' && defaults && parseFloat(rp) !== defaults.return_pct) params.push('return_pct=' + rp);
-        if (ve !== '' && defaults && parseFloat(ve) !== defaults.var_expenses) params.push('var_expenses=' + ve);
+        if (sr !== '' && defaults && parseFloat(sr) !== defaults.sparrate) payload.sparrate = parseFloat(sr);
+        if (er !== '' && defaults && parseFloat(er) !== defaults.etf_rate) payload.etf_rate = parseFloat(er);
+        if (rp !== '' && defaults && parseFloat(rp) !== defaults.return_pct) payload.return_pct = parseFloat(rp);
+        if (ve !== '' && defaults && parseFloat(ve) !== defaults.var_expenses) payload.var_expenses = parseFloat(ve);
 
-        return params.length ? '?' + params.join('&') : '';
+        if (events.length > 0) {
+            payload.events = events.map(function(ev) {
+                return {
+                    amount: ev.amount,
+                    month: ev.month,
+                    year: ev.year,
+                    type: ev.type,
+                    recurring: ev.recurring,
+                };
+            });
+        }
+
+        return payload;
     }
 
-    function loadPrognosis(query) {
-        fetch('/api/prognosis' + (query || ''))
+    function hasSimulation(payload) {
+        return Object.keys(payload).length > 0;
+    }
+
+    function loadPrognosis(payload) {
+        var opts = {};
+        if (payload && Object.keys(payload).length > 0) {
+            opts = {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload),
+            };
+        }
+
+        fetch('/api/prognosis', opts)
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!defaults) {
@@ -282,6 +391,12 @@
                 tbody.innerHTML = '';
                 months.forEach(function(m, i) {
                     var total = m.nutzkonto + m.sparkonto + m.anlegekonto;
+                    var scenarioCell = '';
+                    if (m.scenario && m.scenario !== 0) {
+                        scenarioCell = '<span class="' + (m.scenario > 0 ? 'text-income' : 'text-expense') + '">' + fmt(m.scenario) + '</span>';
+                    } else {
+                        scenarioCell = '-';
+                    }
                     var row = '<tr' + (i === 0 ? ' class="table-active"' : '') + '>' +
                         '<td><strong>' + m.label + '</strong>' + (i === 0 ? ' <span class="badge bg-primary">Aktuell</span>' : '') + '</td>' +
                         '<td class="text-end text-income d-none d-md-table-cell">' + fmt(m.income) + '</td>' +
@@ -297,7 +412,7 @@
                     tbody.insertAdjacentHTML('beforeend', row);
                 });
 
-                if (query) {
+                if (payload && Object.keys(payload).length > 0) {
                     document.getElementById('wiStatus').textContent = 'Simulation aktiv';
                     document.getElementById('wiStatus').style.color = '#6a1b9a';
                 } else {
@@ -307,24 +422,25 @@
     }
 
     // Initial load
-    loadPrognosis('');
+    loadPrognosis(null);
 
     // Simulieren
     document.getElementById('wiApply').addEventListener('click', function() {
-        loadPrognosis(buildQuery());
+        var payload = buildPayload();
+        loadPrognosis(hasSimulation(payload) ? payload : null);
     });
 
     // Zurücksetzen
     document.getElementById('wiReset').addEventListener('click', function() {
-        document.getElementById('wi_delta_income').value = 0;
-        document.getElementById('wi_delta_expenses').value = 0;
         if (defaults) {
             document.getElementById('wi_sparrate').value = defaults.sparrate;
             document.getElementById('wi_etf_rate').value = defaults.etf_rate;
             document.getElementById('wi_return_pct').value = defaults.return_pct;
             document.getElementById('wi_var_expenses').value = defaults.var_expenses;
         }
-        loadPrognosis('');
+        events = [];
+        renderEvents();
+        loadPrognosis(null);
     });
 })();
 </script>
