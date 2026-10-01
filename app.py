@@ -375,12 +375,20 @@ def accounts():
 
 @app.route("/accounts/save", methods=["POST"])
 def accounts_save():
+    today = date.today()
+    current_month = f"{today.year}-{today.month:02d}"
+
     for acc in AccountConfig.query.all():
         bal = request.form.get(f"balance_{acc.account_type}")
         dep = request.form.get(f"deposit_{acc.account_type}")
         ret = request.form.get(f"return_{acc.account_type}")
         if bal is not None:
+            old_bal = acc.current_balance
             acc.current_balance = float(bal or 0)
+            if acc.account_type == "nutzkonto" and acc.current_balance != old_bal:
+                totals = get_month_totals(today.month)
+                acc.current_balance += totals["free_cash"]
+                acc.last_credited_month = current_month
         if dep is not None:
             acc.monthly_deposit = float(dep or 0)
         if ret is not None:
