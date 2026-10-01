@@ -20,7 +20,7 @@ body {
 }
 
 .navbar {
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(env(safe-area-inset-top) + 8px);
 }
 
 .navbar-brand {
