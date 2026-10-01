@@ -550,7 +550,6 @@ def api_prognosis():
     monthly_return = (return_pct / 100) / 12
 
     today = date.today()
-    tagebuch_this_month = get_tagebuch_month_total(today.year, today.month)
 
     boosts = PlannedBoost.query.all()
     boost_by_month = {}
@@ -588,43 +587,27 @@ def api_prognosis():
             if y > ev_year or (y == ev_year and m >= ev_month):
                 scenario_amount += ev_amt
 
-        if i == 0:
-            etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
-            months.append({
-                "label": label,
-                "nutzkonto": round(nutzkonto_bal - tagebuch_this_month + boost_amount + scenario_amount, 2),
-                "sparkonto": round(sparkonto_bal, 2),
-                "anlegekonto": round(anlegekonto_bal, 2),
-                "etf_return": etf_return,
-                "income": round(totals["total_income"], 2),
-                "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(totals["free_cash"] - tagebuch_this_month + boost_amount + scenario_amount, 2),
-                "var_expenses": round(var_expenses, 2),
-                "boost": round(boost_amount, 2),
-                "scenario": round(scenario_amount, 2),
-            })
-        else:
-            adjusted_free = totals["free_cash"] + delta_income - delta_expenses
-            net_free = adjusted_free - var_expenses + boost_amount + scenario_amount
-            nutzkonto_bal += net_free
-            sparkonto_bal += sparrate
-            etf_total_deposits += etf_rate
-            anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
-            etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
+        adjusted_free = totals["free_cash"] + delta_income - delta_expenses
+        net_free = adjusted_free - var_expenses + boost_amount + scenario_amount
+        nutzkonto_bal += net_free
+        sparkonto_bal += sparrate
+        etf_total_deposits += etf_rate
+        anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
+        etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
 
-            months.append({
-                "label": label,
-                "nutzkonto": round(nutzkonto_bal, 2),
-                "sparkonto": round(sparkonto_bal, 2),
-                "anlegekonto": round(anlegekonto_bal, 2),
-                "etf_return": etf_return,
-                "income": round(totals["total_income"], 2),
-                "expenses": round(totals["total_expenses"], 2),
-                "free_cash": round(net_free, 2),
-                "var_expenses": round(var_expenses, 2),
-                "boost": round(boost_amount, 2),
-                "scenario": round(scenario_amount, 2),
-            })
+        months.append({
+            "label": label,
+            "nutzkonto": round(nutzkonto_bal, 2),
+            "sparkonto": round(sparkonto_bal, 2),
+            "anlegekonto": round(anlegekonto_bal, 2),
+            "etf_return": etf_return,
+            "income": round(totals["total_income"], 2),
+            "expenses": round(totals["total_expenses"], 2),
+            "free_cash": round(net_free, 2),
+            "var_expenses": round(var_expenses, 2),
+            "boost": round(boost_amount, 2),
+            "scenario": round(scenario_amount, 2),
+        })
 
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
     cc_data = []
