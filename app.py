@@ -523,8 +523,25 @@ def api_prognosis():
     sparrate = sparkonto.monthly_deposit if sparkonto else 0
     etf_rate = anlegekonto.monthly_deposit if anlegekonto else 0
     var_expenses = get_variable_expenses_avg()
+    return_pct = anlegekonto.expected_return_pct if anlegekonto else 7
 
-    monthly_return = ((anlegekonto.expected_return_pct if anlegekonto else 7) / 100) / 12
+    delta_income = request.args.get("delta_income", 0, type=float)
+    delta_expenses = request.args.get("delta_expenses", 0, type=float)
+    wi_sparrate = request.args.get("sparrate", None, type=float)
+    wi_etf_rate = request.args.get("etf_rate", None, type=float)
+    wi_return_pct = request.args.get("return_pct", None, type=float)
+    wi_var_expenses = request.args.get("var_expenses", None, type=float)
+
+    if wi_sparrate is not None:
+        sparrate = wi_sparrate
+    if wi_etf_rate is not None:
+        etf_rate = wi_etf_rate
+    if wi_return_pct is not None:
+        return_pct = wi_return_pct
+    if wi_var_expenses is not None:
+        var_expenses = wi_var_expenses
+
+    monthly_return = (return_pct / 100) / 12
 
     today = date.today()
     tagebuch_this_month = get_tagebuch_month_total(today.year, today.month)
@@ -561,7 +578,8 @@ def api_prognosis():
                 "boost": round(boost_amount, 2),
             })
         else:
-            net_free = totals["free_cash"] - var_expenses + boost_amount
+            adjusted_free = totals["free_cash"] + delta_income - delta_expenses
+            net_free = adjusted_free - var_expenses + boost_amount
             nutzkonto_bal += net_free
             sparkonto_bal += sparrate
             etf_total_deposits += etf_rate
@@ -589,7 +607,22 @@ def api_prognosis():
             cc_data.append({"name": cc.name, "amount": round(cc_total, 2)})
     cc_data.append({"name": "Variable Ausgaben (Tagebuch)", "amount": var_expenses})
 
-    return jsonify({"months": months, "cost_centers": cc_data, "var_expenses_avg": var_expenses})
+    base_sparrate = sparkonto.monthly_deposit if sparkonto else 0
+    base_etf_rate = anlegekonto.monthly_deposit if anlegekonto else 0
+    base_return_pct = anlegekonto.expected_return_pct if anlegekonto else 7
+    base_var_expenses = get_variable_expenses_avg()
+
+    return jsonify({
+        "months": months,
+        "cost_centers": cc_data,
+        "var_expenses_avg": var_expenses,
+        "defaults": {
+            "sparrate": base_sparrate,
+            "etf_rate": base_etf_rate,
+            "return_pct": base_return_pct,
+            "var_expenses": round(base_var_expenses, 2),
+        },
+    })
 
 
 def run_migrations():
