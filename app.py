@@ -194,7 +194,7 @@ def get_variable_expenses_avg(default=900.0):
         m = (today.month - i - 1) % 12 + 1
         y = today.year + (today.month - i - 1) // 12
         total = get_tagebuch_month_total(y, m)
-        totals.append(total if total > 0 else default)
+        totals.append(total if total >= 300 else default)
     return round(sum(totals) / 3, 2)
 
 
