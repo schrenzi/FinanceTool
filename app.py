@@ -234,7 +234,7 @@ def dashboard():
 
     nutzkonto = accounts.get("nutzkonto")
     if nutzkonto:
-        nutzkonto.adjusted_balance = round(nutzkonto.current_balance - tagebuch_total + boosts_this_month, 2)
+        nutzkonto.adjusted_balance = round(nutzkonto.current_balance + totals["free_cash"] - tagebuch_total + boosts_this_month, 2)
 
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
@@ -386,8 +386,6 @@ def accounts_save():
             old_bal = acc.current_balance
             acc.current_balance = float(bal or 0)
             if acc.account_type == "nutzkonto" and acc.current_balance != old_bal:
-                totals = get_month_totals(today.month)
-                acc.current_balance += totals["free_cash"]
                 acc.last_credited_month = current_month
         if dep is not None:
             acc.monthly_deposit = float(dep or 0)
