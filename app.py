@@ -236,6 +236,15 @@ def dashboard():
     if nutzkonto:
         nutzkonto.adjusted_balance = round(nutzkonto.current_balance + totals["free_cash"] - tagebuch_total + boosts_this_month, 2)
 
+    sparkonto = accounts.get("sparkonto")
+    if sparkonto:
+        sparkonto.adjusted_balance = round(sparkonto.current_balance + totals["sparrate"], 2)
+
+    anlegekonto = accounts.get("anlegekonto")
+    if anlegekonto:
+        monthly_return = (anlegekonto.expected_return_pct / 100) / 12
+        anlegekonto.adjusted_balance = round(anlegekonto.current_balance * (1 + monthly_return) + totals["etf_rate"], 2)
+
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
         accounts=accounts, incomes=incomes,
