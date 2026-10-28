@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.0
+
+- **Prognose**: "Was wäre wenn"-Simulation mit anpassbaren Parametern (Sparrate, ETF-Sparplan, ETF-Rendite, variable Ausgaben)
+- **Prognose**: Szenario-Events — beliebig viele einmalige oder laufende Einnahmen/Ausgaben zu bestimmten Zeitpunkten simulieren
+- **Prognose**: 5-Jahres-Ausblick mit Jahres-Stichtagen nach der monatlichen 12-Monats-Übersicht
+- **Prognose**: Alle Monate zeigen jetzt den projizierten Endstand (worst case) nach allen Abzügen
+- **Dashboard**: Sparkonto und Anlegekonto zeigen prognostizierten Stand inkl. monatlicher Einzahlungen
+- **Dashboard**: Nutzkonto zeigt eingegebenen Vormonats-Endstand + berechneten frei verfügbaren Betrag
+- **Konten**: Beim Speichern des Nutzkontos wird der aktuelle Monat automatisch als kreditiert markiert
+- **Var. Ausgaben**: Monate mit unter 300 € Tagebuch-Einträgen nutzen den Default von 900 € statt das Mittel zu verzerren
+
 ## v0.7.0
 
 - **Prognose**: Neue Spalte "ETF-Ertrag" zeigt kumulierten Zins-/Zinseszinsertrag (ohne Einzahlungen)

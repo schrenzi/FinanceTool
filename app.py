@@ -589,7 +589,9 @@ def api_prognosis():
 
     etf_total_deposits = anlegekonto_bal
     months = []
-    for i in range(13):
+    total_months = 12 * 5 + 1
+    yearly_anchor_month = today.month
+    for i in range(total_months):
         m = (today.month + i - 1) % 12 + 1
         y = today.year + (today.month + i - 1) // 12
         label = f"{m:02d}/{y}"
@@ -610,19 +612,24 @@ def api_prognosis():
         anlegekonto_bal = anlegekonto_bal * (1 + monthly_return) + etf_rate
         etf_return = round(anlegekonto_bal - etf_total_deposits, 2)
 
-        months.append({
-            "label": label,
-            "nutzkonto": round(nutzkonto_bal, 2),
-            "sparkonto": round(sparkonto_bal, 2),
-            "anlegekonto": round(anlegekonto_bal, 2),
-            "etf_return": etf_return,
-            "income": round(totals["total_income"], 2),
-            "expenses": round(totals["total_expenses"], 2),
-            "free_cash": round(net_free, 2),
-            "var_expenses": round(var_expenses, 2),
-            "boost": round(boost_amount, 2),
-            "scenario": round(scenario_amount, 2),
-        })
+        is_monthly = i < 13
+        is_yearly = i >= 13 and m == yearly_anchor_month
+
+        if is_monthly or is_yearly:
+            months.append({
+                "label": label,
+                "nutzkonto": round(nutzkonto_bal, 2),
+                "sparkonto": round(sparkonto_bal, 2),
+                "anlegekonto": round(anlegekonto_bal, 2),
+                "etf_return": etf_return,
+                "income": round(totals["total_income"], 2),
+                "expenses": round(totals["total_expenses"], 2),
+                "free_cash": round(net_free, 2),
+                "var_expenses": round(var_expenses, 2),
+                "boost": round(boost_amount, 2),
+                "scenario": round(scenario_amount, 2),
+                "is_yearly": is_yearly,
+            })
 
     cost_centers = CostCenter.query.order_by(CostCenter.position).all()
     cc_data = []

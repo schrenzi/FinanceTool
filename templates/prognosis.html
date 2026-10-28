@@ -168,10 +168,10 @@
         return val.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
     }
 
-    // Populate month selector with next 13 months
+    // Populate month selector with next 5 years
     var monthSelect = document.getElementById('ev_month');
     var now = new Date();
-    for (var i = 0; i < 13; i++) {
+    for (var i = 0; i < 60; i++) {
         var mm = (now.getMonth() + i) % 12 + 1;
         var yy = now.getFullYear() + Math.floor((now.getMonth() + i) / 12);
         var opt = document.createElement('option');
@@ -389,16 +389,22 @@
                 // Table
                 var tbody = document.querySelector('#prognosisTable tbody');
                 tbody.innerHTML = '';
+                var lastWasMonthly = true;
                 months.forEach(function(m, i) {
                     var total = m.nutzkonto + m.sparkonto + m.anlegekonto;
-                    var scenarioCell = '';
-                    if (m.scenario && m.scenario !== 0) {
-                        scenarioCell = '<span class="' + (m.scenario > 0 ? 'text-income' : 'text-expense') + '">' + fmt(m.scenario) + '</span>';
-                    } else {
-                        scenarioCell = '-';
+                    var isYearly = m.is_yearly;
+
+                    if (isYearly && lastWasMonthly) {
+                        tbody.insertAdjacentHTML('beforeend',
+                            '<tr><td colspan="10" class="text-center text-muted py-1" style="background:#e8eaf6;font-size:0.8rem;"><i class="bi bi-three-dots me-1"></i>Jahresübersicht</td></tr>');
+                        lastWasMonthly = false;
                     }
-                    var row = '<tr' + (i === 0 ? ' class="table-active"' : '') + '>' +
-                        '<td><strong>' + m.label + '</strong>' + (i === 0 ? ' <span class="badge bg-primary">Aktuell</span>' : '') + '</td>' +
+
+                    var trClass = i === 0 ? ' class="table-active"' : (isYearly ? ' style="background:#f3e5f5;"' : '');
+                    var row = '<tr' + trClass + '>' +
+                        '<td><strong>' + m.label + '</strong>' +
+                        (i === 0 ? ' <span class="badge bg-primary">Aktuell</span>' : '') +
+                        (isYearly ? ' <span class="badge" style="background:#6a1b9a;color:#fff;">Jahr</span>' : '') + '</td>' +
                         '<td class="text-end text-income d-none d-md-table-cell">' + fmt(m.income) + '</td>' +
                         '<td class="text-end text-expense d-none d-md-table-cell">' + fmt(m.expenses) + '</td>' +
                         '<td class="text-end d-none d-md-table-cell" style="color:#e65100">' + fmt(m.var_expenses) + '</td>' +
