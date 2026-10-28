@@ -187,7 +187,13 @@ def process_monthly_credit():
     db.session.commit()
 
 
-def get_variable_expenses_avg(default=900.0):
+def get_variable_expenses_default():
+    nutzkonto = AccountConfig.query.filter_by(account_type="nutzkonto").first()
+    return nutzkonto.var_expenses_default if nutzkonto and nutzkonto.var_expenses_default else 900.0
+
+
+def get_variable_expenses_avg():
+    default = get_variable_expenses_default()
     today = date.today()
     totals = []
     for i in range(1, 4):
@@ -523,6 +529,19 @@ def prognosis():
     return render_template("prognosis.html")
 
 
+@app.route("/api/var-expenses-default", methods=["POST"])
+def save_var_expenses_default():
+    data = request.get_json(silent=True) or {}
+    value = data.get("value")
+    if value is None or float(value) < 0:
+        return jsonify({"error": "Ungültiger Wert"}), 400
+    nutzkonto = AccountConfig.query.filter_by(account_type="nutzkonto").first()
+    if nutzkonto:
+        nutzkonto.var_expenses_default = float(value)
+        db.session.commit()
+    return jsonify({"value": float(value)})
+
+
 @app.route("/api/prognosis", methods=["GET", "POST"])
 def api_prognosis():
     accounts = {a.account_type: a for a in AccountConfig.query.all()}
@@ -653,6 +672,7 @@ def api_prognosis():
             "etf_rate": base_etf_rate,
             "return_pct": base_return_pct,
             "var_expenses": round(base_var_expenses, 2),
+            "var_expenses_default": get_variable_expenses_default(),
         },
     })
 
@@ -682,6 +702,14 @@ def run_migrations():
         if "due_month" not in columns:
             db.session.execute(text(
                 "ALTER TABLE income ADD COLUMN due_month INTEGER DEFAULT 1"
+            ))
+            db.session.commit()
+
+    if "account_config" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("account_config")]
+        if "var_expenses_default" not in columns:
+            db.session.execute(text(
+                "ALTER TABLE account_config ADD COLUMN var_expenses_default FLOAT DEFAULT 900.0"
             ))
             db.session.commit()
 

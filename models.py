@@ -57,3 +57,4 @@ class AccountConfig(db.Model):
     monthly_deposit = db.Column(db.Float, default=0)
     expected_return_pct = db.Column(db.Float, default=0)
     last_credited_month = db.Column(db.String(7), default="")
+    var_expenses_default = db.Column(db.Float, default=900.0)

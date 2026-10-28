@@ -44,6 +44,17 @@
                     </div>
                 </div>
             </div>
+            <div class="row g-2 mt-1">
+                <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+                    <small class="text-muted text-nowrap">Default var. Ausgaben:</small>
+                    <div class="input-group input-group-sm" style="max-width:160px;">
+                        <input type="number" id="var_expenses_default" class="form-control" step="50" min="0">
+                        <span class="input-group-text">&euro;</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" id="saveVarDefault" title="Default speichern"><i class="bi bi-check-lg"></i></button>
+                    <span id="varDefaultStatus" class="text-success small d-none"><i class="bi bi-check-circle"></i></span>
+                </div>
+            </div>
 
             <!-- Scenario Events -->
             <hr class="my-3">
@@ -230,6 +241,23 @@
         document.getElementById('ev_recurring').checked = false;
     });
 
+    document.getElementById('saveVarDefault').addEventListener('click', function() {
+        var val = parseFloat(document.getElementById('var_expenses_default').value);
+        if (isNaN(val) || val < 0) return;
+        fetch('/api/var-expenses-default', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({value: val}),
+        }).then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.value !== undefined) {
+                var status = document.getElementById('varDefaultStatus');
+                status.classList.remove('d-none');
+                setTimeout(function() { status.classList.add('d-none'); }, 2000);
+            }
+        });
+    });
+
     function buildPayload() {
         var payload = {};
         var sr = document.getElementById('wi_sparrate').value;
@@ -280,6 +308,7 @@
                     document.getElementById('wi_etf_rate').value = defaults.etf_rate;
                     document.getElementById('wi_return_pct').value = defaults.return_pct;
                     document.getElementById('wi_var_expenses').value = defaults.var_expenses;
+                    document.getElementById('var_expenses_default').value = defaults.var_expenses_default;
                 }
 
                 var months = data.months;

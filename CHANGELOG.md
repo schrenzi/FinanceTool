@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.1
+
+- **Prognose**: Default-Wert für variable Ausgaben im Prognosereiter einstellbar (bisher fix 900 €)
+
 ## v0.8.0
 
 - **Prognose**: "Was wäre wenn"-Simulation mit anpassbaren Parametern (Sparrate, ETF-Sparplan, ETF-Rendite, variable Ausgaben)
