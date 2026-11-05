@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.2
+
+- **Dashboard**: Tortendiagramm aller Kostenarten (Fixkosten, var. Ausgaben, Sparrate, ETF) mit Prozentangabe in Tooltips
+- **Dashboard**: Hinweis ob variable Ausgaben auf 3-Monatsmittel oder Pauschalwert basieren
+- **Dashboard**: „Ausgaben nach Kostenstelle" umbenannt zu „Ausgaben nach Fixkostenstelle"
+- **Prognose**: Tortendiagramm entfernt (jetzt nur noch auf Dashboard)
+
 ## v0.8.1
 
 - **Prognose**: Default-Wert für variable Ausgaben im Prognosereiter einstellbar (bisher fix 900 €)

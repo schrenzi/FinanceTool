@@ -78,12 +78,22 @@
     {% endfor %}
 </div>
 
-<!-- Expense Breakdown -->
-<div class="row g-3">
+<!-- Cost Distribution Pie Chart -->
+<div class="row g-3 mb-4">
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Ausgaben nach Kostenstelle</h5>
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Kostenverteilung</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="costPieChart" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-list-columns me-2"></i>Ausgaben nach Fixkostenstelle</h5>
             </div>
             <div class="card-body">
                 {% if expenses_by_cc %}
@@ -104,30 +114,76 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Einnahmequellen</h5>
-            </div>
-            <div class="card-body">
-                {% if incomes %}
-                {% for inc in incomes %}
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <strong>{{ inc.name }}</strong>
-                        <br><small class="text-muted">{{ inc.income_type }}</small>
-                    </div>
-                    <div class="text-end">
-                        <strong class="text-income">{{ "%.2f"|format(inc.amount) }} &euro;</strong>
-                        <br><small class="text-muted">{{ inc.frequency }}</small>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <p class="text-muted text-center py-3">Noch keine Einnahmen eingetragen.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var ccData = {{ expenses_by_cc | tojson }};
+    var varExpenses = {{ var_expenses }};
+    var varExpensesIsAvg = {{ var_expenses_is_avg | tojson }};
+    var sparrate = {{ totals.sparrate }};
+    var etfRate = {{ totals.etf_rate }};
+
+    var labels = [];
+    var values = [];
+    var colors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9'];
+    var sliceColors = [];
+    var idx = 0;
+
+    ccData.forEach(function(cc) {
+        labels.push(cc.name);
+        values.push(cc.total);
+        sliceColors.push(colors[idx % colors.length]);
+        idx++;
+    });
+
+    var varLabel = 'Var. Ausgaben' + (varExpensesIsAvg ? ' (3-MonatsØ)' : ' (Pauschal)');
+    labels.push(varLabel);
+    values.push(varExpenses);
+    sliceColors.push('#e65100');
+
+    if (sparrate > 0) {
+        labels.push('Sparrate');
+        values.push(sparrate);
+        sliceColors.push('#2e7d32');
+    }
+    if (etfRate > 0) {
+        labels.push('ETF-Sparplan');
+        values.push(etfRate);
+        sliceColors.push('#6a1b9a');
+    }
+
+    var total = values.reduce(function(a, b) { return a + b; }, 0);
+
+    var ctx = document.getElementById('costPieChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: sliceColors,
+                borderWidth: 2, borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            var pct = total > 0 ? (ctx.parsed / total * 100).toFixed(1) : 0;
+                            return ctx.label + ': ' + ctx.parsed.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' € (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
 {% endblock %}

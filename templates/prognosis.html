@@ -106,28 +106,14 @@
     </div>
 </div>
 
-<!-- Charts -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Kontostände</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="accountChart"></canvas>
-                </div>
-            </div>
-        </div>
+<!-- Chart -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Kontostände</h5>
     </div>
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Ausgabenverteilung</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="expenseChart" height="200"></canvas>
-            </div>
+    <div class="card-body">
+        <div class="chart-container">
+            <canvas id="accountChart"></canvas>
         </div>
     </div>
 </div>
@@ -165,7 +151,6 @@
 (function() {
     var isMobile = window.innerWidth < 768;
     var accountChart = null;
-    var pieChart = null;
     var defaults = null;
     var events = [];
 
@@ -374,45 +359,6 @@
                             }
                         }
                     });
-                }
-
-                // Pie Chart (only on first load)
-                if (!pieChart) {
-                    var ccData = data.cost_centers;
-                    if (ccData.length > 0) {
-                        var pieColors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9', '#e8eaf6'];
-                        var sliceColors = ccData.map(function(c, i) {
-                            return c.name.indexOf('Tagebuch') >= 0 ? '#e65100' : pieColors[i % pieColors.length];
-                        });
-                        var ctxPie = document.getElementById('expenseChart').getContext('2d');
-                        pieChart = new Chart(ctxPie, {
-                            type: 'doughnut',
-                            data: {
-                                labels: ccData.map(function(c) { return c.name; }),
-                                datasets: [{
-                                    data: ccData.map(function(c) { return c.amount; }),
-                                    backgroundColor: sliceColors,
-                                    borderWidth: 2, borderColor: '#fff',
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: { position: 'bottom', labels: { padding: 12 } },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: function(ctx) {
-                                                return ctx.label + ': ' + ctx.parsed.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' €';
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        document.getElementById('expenseChart').parentElement.innerHTML =
-                            '<p class="text-muted text-center py-4">Noch keine Ausgaben vorhanden.</p>';
-                    }
                 }
 
                 // Table

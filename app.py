@@ -196,12 +196,17 @@ def get_variable_expenses_avg():
     default = get_variable_expenses_default()
     today = date.today()
     totals = []
+    uses_real_data = False
     for i in range(1, 4):
         m = (today.month - i - 1) % 12 + 1
         y = today.year + (today.month - i - 1) // 12
         total = get_tagebuch_month_total(y, m)
-        totals.append(total if total >= 300 else default)
-    return round(sum(totals) / 3, 2)
+        if total >= 300:
+            uses_real_data = True
+            totals.append(total)
+        else:
+            totals.append(default)
+    return round(sum(totals) / 3, 2), uses_real_data
 
 
 @app.before_request
@@ -227,6 +232,9 @@ def dashboard():
         )
         if cc_total > 0:
             expenses_by_cc.append({"name": cc.name, "icon": cc.icon, "total": round(cc_total, 2)})
+
+    var_expenses, var_expenses_is_avg = get_variable_expenses_avg()
+    var_expenses_default = get_variable_expenses_default()
 
     tagebuch_total = get_tagebuch_month_total(today.year, today.month)
     totals["tagebuch_spent"] = round(tagebuch_total, 2)
@@ -254,6 +262,8 @@ def dashboard():
     return render_template(
         "dashboard.html", totals=totals, expenses_by_cc=expenses_by_cc,
         accounts=accounts, incomes=incomes,
+        var_expenses=var_expenses, var_expenses_is_avg=var_expenses_is_avg,
+        var_expenses_default=var_expenses_default,
     )
 
 
@@ -556,7 +566,7 @@ def api_prognosis():
 
     sparrate = sparkonto.monthly_deposit if sparkonto else 0
     etf_rate = anlegekonto.monthly_deposit if anlegekonto else 0
-    var_expenses = get_variable_expenses_avg()
+    var_expenses, _ = get_variable_expenses_avg()
     return_pct = anlegekonto.expected_return_pct if anlegekonto else 7
 
     if request.method == "POST":
@@ -661,7 +671,7 @@ def api_prognosis():
     base_sparrate = sparkonto.monthly_deposit if sparkonto else 0
     base_etf_rate = anlegekonto.monthly_deposit if anlegekonto else 0
     base_return_pct = anlegekonto.expected_return_pct if anlegekonto else 7
-    base_var_expenses = get_variable_expenses_avg()
+    base_var_expenses, _ = get_variable_expenses_avg()
 
     return jsonify({
         "months": months,
