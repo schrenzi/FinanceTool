@@ -297,39 +297,40 @@
                 }
 
                 var months = data.months;
-                var labels = months.map(function(m) { return m.label; });
+                var chartMonths = months.filter(function(m) { return !m.is_yearly; });
+                var chartLabels = chartMonths.map(function(m) { return m.label; });
 
-                // Account Chart
+                // Account Chart (1 year only)
                 if (accountChart) {
-                    accountChart.data.labels = labels;
-                    accountChart.data.datasets[0].data = months.map(function(m) { return m.nutzkonto; });
-                    accountChart.data.datasets[1].data = months.map(function(m) { return m.sparkonto; });
-                    accountChart.data.datasets[2].data = months.map(function(m) { return m.anlegekonto; });
+                    accountChart.data.labels = chartLabels;
+                    accountChart.data.datasets[0].data = chartMonths.map(function(m) { return m.nutzkonto; });
+                    accountChart.data.datasets[1].data = chartMonths.map(function(m) { return m.sparkonto; });
+                    accountChart.data.datasets[2].data = chartMonths.map(function(m) { return m.anlegekonto; });
                     accountChart.update();
                 } else {
                     var ctxAcc = document.getElementById('accountChart').getContext('2d');
                     accountChart = new Chart(ctxAcc, {
                         type: 'line',
                         data: {
-                            labels: labels,
+                            labels: chartLabels,
                             datasets: [
                                 {
                                     label: 'Nutzkonto',
-                                    data: months.map(function(m) { return m.nutzkonto; }),
+                                    data: chartMonths.map(function(m) { return m.nutzkonto; }),
                                     borderColor: COLORS.nutzkonto,
                                     backgroundColor: COLORS.nutzkonto + '20',
                                     fill: true, tension: 0.3,
                                 },
                                 {
                                     label: 'Sparkonto',
-                                    data: months.map(function(m) { return m.sparkonto; }),
+                                    data: chartMonths.map(function(m) { return m.sparkonto; }),
                                     borderColor: COLORS.sparkonto,
                                     backgroundColor: COLORS.sparkonto + '20',
                                     fill: true, tension: 0.3,
                                 },
                                 {
                                     label: 'Anlegekonto (ETF)',
-                                    data: months.map(function(m) { return m.anlegekonto; }),
+                                    data: chartMonths.map(function(m) { return m.anlegekonto; }),
                                     borderColor: COLORS.anlegekonto,
                                     backgroundColor: COLORS.anlegekonto + '20',
                                     fill: true, tension: 0.3,
@@ -353,6 +354,7 @@
                             scales: {
                                 x: { ticks: { maxRotation: 45, minRotation: 45 } },
                                 y: {
+                                    beginAtZero: false,
                                     title: { display: !isMobile, text: 'Euro (€)' },
                                     ticks: { callback: function(val) { return val.toLocaleString('de-DE') + ' €'; } }
                                 }

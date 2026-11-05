@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.3
+
+- **Prognose**: Liniendiagramm auf 1 Jahr gekürzt für bessere Lesbarkeit am Smartphone (Jahresvorschau bleibt in Tabelle)
+- **Dashboard**: Prozentwerte direkt im Tortendiagramm-Ring sichtbar (ab 5%)
+- **Dashboard**: Variable Ausgaben im Tortendiagramm jetzt in Blauton statt Orange — klare Trennung zwischen Ausgaben (blau) und Sparen (grün/lila)
+
 ## v0.8.2
 
 - **Dashboard**: Tortendiagramm aller Kostenarten (Fixkosten, var. Ausgaben, Sparrate, ETF) mit Prozentangabe in Tooltips

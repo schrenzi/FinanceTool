@@ -119,8 +119,11 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
 (function() {
+    Chart.register(ChartDataLabels);
+
     var ccData = {{ expenses_by_cc | tojson }};
     var varExpenses = {{ var_expenses }};
     var varExpensesIsAvg = {{ var_expenses_is_avg | tojson }};
@@ -129,21 +132,21 @@
 
     var labels = [];
     var values = [];
-    var colors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9'];
+    var fixkostenColors = ['#1a237e', '#283593', '#3949ab', '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9'];
     var sliceColors = [];
     var idx = 0;
 
     ccData.forEach(function(cc) {
         labels.push(cc.name);
         values.push(cc.total);
-        sliceColors.push(colors[idx % colors.length]);
+        sliceColors.push(fixkostenColors[idx % fixkostenColors.length]);
         idx++;
     });
 
     var varLabel = 'Var. Ausgaben' + (varExpensesIsAvg ? ' (3-MonatsØ)' : ' (Pauschal)');
     labels.push(varLabel);
     values.push(varExpenses);
-    sliceColors.push('#e65100');
+    sliceColors.push('#0277bd');
 
     if (sparrate > 0) {
         labels.push('Sparrate');
@@ -171,6 +174,7 @@
         },
         options: {
             responsive: true,
+            layout: { padding: 4 },
             plugins: {
                 legend: { position: 'bottom', labels: { padding: 12 } },
                 tooltip: {
@@ -180,6 +184,16 @@
                             return ctx.label + ': ' + ctx.parsed.toLocaleString('de-DE', {minimumFractionDigits: 2}) + ' € (' + pct + '%)';
                         }
                     }
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: function(value) {
+                        var pct = total > 0 ? (value / total * 100) : 0;
+                        return pct >= 5 ? pct.toFixed(0) + '%' : '';
+                    },
+                    anchor: 'center',
+                    align: 'center',
                 }
             }
         }
