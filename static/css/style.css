@@ -1,178 +1,285 @@
+:root {
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --border: #e8ecf1;
+    --text: #1a1d23;
+    --text-muted: #6b7280;
+    --primary: #2d3a8c;
+    --primary-light: #3b4caa;
+    --income: #16a34a;
+    --income-bg: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    --expense: #dc2626;
+    --expense-bg: linear-gradient(135deg, #fef2f2, #fecaca);
+    --savings: #2563eb;
+    --savings-bg: linear-gradient(135deg, #eff6ff, #bfdbfe);
+    --invest: #7c3aed;
+    --invest-bg: linear-gradient(135deg, #f5f3ff, #ddd6fe);
+    --free: #0891b2;
+    --free-bg: linear-gradient(135deg, #ecfeff, #a5f3fc);
+    --radius: 0.875rem;
+    --radius-sm: 0.5rem;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+}
+
 body {
-    background-color: #f0f2f5;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
     padding-bottom: env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
 }
 
-.card {
-    border: none;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border-radius: 0.75rem;
-    transition: box-shadow 0.2s;
-}
-
-.card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-
-.card-header {
-    border-radius: 0.75rem 0.75rem 0 0 !important;
-}
-
+/* --- Navbar --- */
 .navbar {
-    padding-top: calc(env(safe-area-inset-top) + 16px);
+    padding-top: calc(env(safe-area-inset-top) + 12px);
+    padding-bottom: 12px;
+    background: linear-gradient(135deg, #1e2a6e, var(--primary)) !important;
+    box-shadow: 0 2px 12px rgba(30,42,110,0.25);
 }
 
 .navbar-brand {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
-.stat-card {
-    text-align: center;
+.navbar .nav-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+}
+
+.navbar .nav-link:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.navbar .nav-link.active {
+    background: rgba(255,255,255,0.18);
+}
+
+/* --- Cards --- */
+.card {
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    background: var(--surface);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    border-radius: var(--radius) var(--radius) 0 0 !important;
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 1.25rem;
+}
+
+.card-header h5,
+.card-header h6 {
+    font-weight: 600;
+}
+
+.card-body {
     padding: 1.25rem;
 }
 
+/* --- Stat Cards --- */
+.stat-card {
+    text-align: center;
+    padding: 1.25rem 1rem;
+}
+
 .stat-card .stat-value {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.02em;
 }
 
 .stat-card .stat-label {
-    font-size: 0.85rem;
-    color: #6c757d;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    font-weight: 600;
 }
 
 .stat-card .stat-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.7;
+    font-size: 1.75rem;
+    margin-bottom: 0.4rem;
+    opacity: 0.6;
 }
 
-.text-income {
-    color: #2e7d32;
+/* --- Semantic Colors --- */
+.text-income { color: var(--income); }
+.text-expense { color: var(--expense); }
+.text-savings { color: var(--savings); }
+.text-invest { color: var(--invest); }
+.text-free { color: var(--free); }
+
+.bg-income { background: var(--income-bg); }
+.bg-expense { background: var(--expense-bg); }
+.bg-savings { background: var(--savings-bg); }
+.bg-invest { background: var(--invest-bg); }
+.bg-free { background: var(--free-bg); }
+
+/* --- Account Cards --- */
+.account-card {
+    border-left: 4px solid;
+    border-radius: var(--radius);
 }
 
-.text-expense {
-    color: #c62828;
+.account-card .card-body h4 {
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
 }
 
-.text-savings {
-    color: #1565c0;
-}
+.account-card.nutzkonto { border-left-color: var(--free); }
+.account-card.sparkonto { border-left-color: var(--savings); }
+.account-card.anlegekonto { border-left-color: var(--invest); }
 
-.text-invest {
-    color: #6a1b9a;
-}
-
-.text-free {
-    color: #00838f;
-}
-
-.bg-income {
-    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-}
-
-.bg-expense {
-    background: linear-gradient(135deg, #ffebee, #ffcdd2);
-}
-
-.bg-savings {
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-}
-
-.bg-invest {
-    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
-}
-
-.bg-free {
-    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-}
-
+/* --- Tables --- */
 .table th {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #6c757d;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    border-bottom-width: 1px;
 }
 
+.table td {
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* --- Badges --- */
 .cc-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.25rem 0.65rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 2rem;
-    background: #e8eaf6;
-    color: #283593;
-    font-size: 0.85rem;
-    font-weight: 500;
+    background: #eef1f8;
+    color: var(--primary);
+    font-size: 0.82rem;
+    font-weight: 550;
 }
 
+/* --- Progress Bars --- */
 .progress {
     border-radius: 1rem;
-    background-color: #e9ecef;
+    background-color: #eef1f8;
+    height: 5px;
 }
 
-.account-card {
-    border-left: 4px solid;
-    border-radius: 0.75rem;
-}
-
-.account-card.nutzkonto {
-    border-left-color: #00838f;
-}
-
-.account-card.sparkonto {
-    border-left-color: #1565c0;
-}
-
-.account-card.anlegekonto {
-    border-left-color: #6a1b9a;
-}
-
+/* --- Buttons --- */
 .btn-finance {
-    background: linear-gradient(135deg, #1a237e, #283593);
+    background: linear-gradient(135deg, #1e2a6e, var(--primary-light));
     color: #fff;
     border: none;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
 }
 
 .btn-finance:hover {
-    background: linear-gradient(135deg, #283593, #3949ab);
+    background: linear-gradient(135deg, var(--primary), #4a5cc7);
     color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(45,58,140,0.25);
 }
 
-.min-width-0 {
-    min-width: 0;
+.btn-finance:active {
+    transform: translateY(0);
+}
+
+/* --- Form Controls --- */
+.form-control, .form-select {
+    border-radius: var(--radius-sm);
+    border-color: var(--border);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(45,58,140,0.1);
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* --- Alerts --- */
+.alert {
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: 500;
+}
+
+/* --- Entry Items --- */
+.entry-item {
+    transition: background 0.15s;
 }
 
 .entry-item:hover {
-    background-color: #f8f9fa;
+    background-color: #f8fafc;
 }
 
+/* --- Chart Container --- */
 .chart-container {
     position: relative;
     height: 300px;
 }
 
+/* --- Page Headers --- */
+h4 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+h4 .bi {
+    opacity: 0.7;
+}
+
+/* --- Misc --- */
+.min-width-0 {
+    min-width: 0;
+}
+
+.fw-medium {
+    font-weight: 500;
+}
+
+/* --- Responsive --- */
 @media (max-width: 767.98px) {
     .stat-card {
-        padding: 0.75rem;
+        padding: 0.7rem 0.5rem;
     }
 
     .stat-card .stat-value {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
     }
 
     .stat-card .stat-icon {
-        font-size: 1.4rem;
-        margin-bottom: 0.25rem;
+        font-size: 1.3rem;
+        margin-bottom: 0.2rem;
     }
 
     .stat-card .stat-label {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
     }
 
     .container {
@@ -181,15 +288,23 @@ body {
     }
 
     .navbar-brand {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
 
     h4 {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
     }
 
     .card-header h5 {
-        font-size: 0.95rem;
+        font-size: 0.92rem;
+    }
+
+    .card-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
     }
 
     #prognosisTable {

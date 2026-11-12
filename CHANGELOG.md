@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.0
+
+- **Design**: Visuelles Redesign — Inter-Font, modernere Farbpalette, feinere Schatten und Borders
+- **Design**: Konsistentere Card-Styles, bessere Hover-Effekte, polierte Buttons
+- **Design**: Verbessertes Mobile-Layout mit besserer Lesbarkeit und Touch-Targets
+- **Design**: Navbar mit subtilerem Gradient und besserem Spacing
+
 ## v0.8.3
 
 - **Prognose**: Liniendiagramm auf 1 Jahr gekürzt für bessere Lesbarkeit am Smartphone (Jahresvorschau bleibt in Tabelle)
